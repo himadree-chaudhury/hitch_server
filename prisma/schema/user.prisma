@@ -2,7 +2,7 @@ model User {
   id           String     @id @default(uuid())
   email        String     @unique
   password     String?
-  provider     String?
+  provider     Provider
   verification Boolean    @default(false)
   role         UserRole   @default(USER)
   status       UserStatus @default(ACTIVE)
@@ -17,11 +17,11 @@ model UserProfile {
   id         String   @id @default(uuid())
   userId     String   @unique
   user       User     @relation(fields: [userId], references: [id])
-  first_name String?
-  last_name  String?
+  firstName  String?
+  lastName   String?
   interests  String[] @default([])
   bio        String?
-  image_url  String?
+  imageUrl   String?
   gender     Gender?
   city       String?
   country    String?
@@ -30,7 +30,6 @@ model UserProfile {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  hostedEvents Event[]
   eventsJoined EventParticipant[]
   payments     Payment[]
 
@@ -41,11 +40,12 @@ model UserProfile {
 model HostProfile {
   id            String       @id @default(uuid())
   userId        String       @unique
+  user          User         @relation(fields: [userId], references: [id])
   ratingCount   Int?         @default(0)
   averageRating Float?       @default(0)
-  user          User         @relation(fields: [userId], references: [id])
-  reviews       HostReview[]
-
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  
+  hostedEvents  Event[]
+  reviews       HostReview[]
 }

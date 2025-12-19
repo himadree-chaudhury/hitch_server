@@ -1,3 +1,8 @@
+enum Provider {
+  CREDENTIALS
+  GOOGLE
+}
+
 enum UserRole {
   USER
   HOST

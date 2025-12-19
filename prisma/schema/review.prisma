@@ -2,16 +2,14 @@ model HostReview {
     id      String @id @default(uuid())
     eventId String @unique
     event   Event  @relation(fields: [eventId], references: [id])
-
     reviewerId String      @unique
     reviewer   UserProfile @relation(fields: [reviewerId], references: [userId])
-
     hostId String      @unique
     host   HostProfile @relation(fields: [hostId], references: [userId])
-
     rating     Int
     comment    String
     created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
 }
 
 model EventReview {
@@ -23,4 +21,5 @@ model EventReview {
     rating     Int
     comment    String
     created_at DateTime    @default(now())
+    updated_at DateTime    @updatedAt
 }

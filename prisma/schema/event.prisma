@@ -1,45 +1,47 @@
 model Event {
-    id                  String             @id @default(uuid())
-    host_id             String             @unique
-    host                UserProfile        @relation(fields: [host_id], references: [userId])
+    id                  String        @id @default(uuid())
+    hostId              String        @unique
+    host                HostProfile   @relation(fields: [hostId], references: [userId])
     title               String
-    slug                String             @unique
+    slug                String        @unique
     type                EventType
+    eventCategoryId     String
+    eventCategory       EventCategory @relation(fields: [eventCategoryId], references: [id])
     description         String?
-    start_time          DateTime
-    end_time            DateTime
+    startTime           DateTime
+    endTime             DateTime
     city                String
     country             String
     address             String
     latitude            Float
     longitude           Float
     minParticipants     Int
-    maxParticipants     Int
-    currentParticipants Int
-    eventParticipants   EventParticipant[]
-    image_url           String?
-    joining_fee         Float
+    maxParticipants     Int?
+    currentParticipants Int           @default(0)
+    imageUrl            String?
+    joiningFee          Float
     currency            String
-    status              EventStatus        @default(UPCOMING)
-    is_featured         Boolean            @default(false)
+    status              EventStatus   @default(UPCOMING)
+    isFeatured          Boolean       @default(false)
+    rating              Int           @default(0)
+    reviewCount         Int           @default(0)
+    totalViews          Int           @default(0)
+    created_at          DateTime      @default(now())
+    updated_at          DateTime      @updatedAt
 
-    payments Payment[]
-
-    hostReviews  HostReview[]
-    eventReviews EventReview[]
-
-    created_at      DateTime      @default(now())
-    updated_at      DateTime      @updatedAt
-    eventCategory   EventCategory @relation(fields: [eventCategoryId], references: [id])
-    eventCategoryId String
+    payments          Payment[]
+    eventParticipants EventParticipant[]
+    hostReviews       HostReview[]
+    eventReviews      EventReview[]
 }
 
 model EventCategory {
     id         String   @id @default(uuid())
     name       String   @unique
-    events     Event[]
     created_at DateTime @default(now())
     updated_at DateTime @updatedAt
+
+    events Event[]
 }
 
 model EventParticipant {
@@ -49,7 +51,8 @@ model EventParticipant {
     userId     String            @unique
     user       UserProfile       @relation(fields: [userId], references: [userId])
     status     ParticipantStatus @default(PENDING_PAYMENT)
-    paymentId  Payment?          @relation(fields: [id], references: [id])
+    paymentId  String?           @unique
+    payment    Payment?          @relation(fields: [paymentId], references: [id])
     joined_at  DateTime          @default(now())
     updated_at DateTime          @updatedAt
 }
