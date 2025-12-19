@@ -1,12 +1,13 @@
 import { Server } from "http";
 import app from "./app";
+import { prisma } from "./app/db/prisma";
 
 
 let server: Server;
 
 const startServer = async () => {
   try {
-    // await prisma.$connect();
+    await prisma.$connect();
     server = app.listen(4000, () => {
       console.log(
         `Server is running on port `
