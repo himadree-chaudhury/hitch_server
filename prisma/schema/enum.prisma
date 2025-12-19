@@ -1,0 +1,17 @@
+enum UserRole {
+  User
+  HOST
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  BANNED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}

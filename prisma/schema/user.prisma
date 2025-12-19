@@ -1,0 +1,33 @@
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  password     String?
+  provider     String?
+  verification Boolean    @default(false)
+  role         UserRole   @default(User)
+  status       UserStatus @default(ACTIVE)
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+
+  userProfile UserProfile?
+}
+
+model UserProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  first_name     String?
+  last_name      String?
+  interests      String[] @default([])
+  bio            String?
+  image_url      String?
+  gender         Gender?
+  city           String?
+  country        String?
+  latitude       Float?
+  longitude      Float?
+  average_rating Float?
+  rating_count   Int?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+}
