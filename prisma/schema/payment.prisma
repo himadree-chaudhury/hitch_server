@@ -1,0 +1,15 @@
+model Payment {
+    id                       String             @id @default(uuid())
+    userId                   String             @unique
+    user                     UserProfile        @relation(fields: [userId], references: [userId])
+    eventId                  String             @unique
+    event                    Event              @relation(fields: [eventId], references: [id])
+    amount                   Float
+    currency                 String
+    stripe_payment_intent_id String
+    stripe_charge_id         String?
+    status                   PaymentStatus      @default(REQUIRES_PAYMENT_METHOD)
+    created_at               DateTime           @default(now())
+    updated_at               DateTime           @updatedAt
+    eventParticipants        EventParticipant[]
+}

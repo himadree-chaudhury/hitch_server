@@ -15,3 +15,31 @@ enum Gender {
   FEMALE
   OTHER
 }
+
+enum EventType {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum ParticipantStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  WAITLISTED
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT_METHOD
+  REQUIRES_CONFIRMATION
+  SUCCEEDED
+  CANCELLED
+  FAILED
+}

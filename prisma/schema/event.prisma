@@ -1,0 +1,55 @@
+model Event {
+    id                  String             @id @default(uuid())
+    host_id             String             @unique
+    host                UserProfile        @relation(fields: [host_id], references: [userId])
+    title               String
+    slug                String             @unique
+    type                EventType
+    description         String?
+    start_time          DateTime
+    end_time            DateTime
+    city                String
+    country             String
+    address             String
+    latitude            Float
+    longitude           Float
+    minParticipants     Int
+    maxParticipants     Int
+    currentParticipants Int
+    eventParticipants   EventParticipant[]
+    image_url           String?
+    joining_fee         Float
+    currency            String
+    status              EventStatus        @default(UPCOMING)
+    is_featured         Boolean            @default(false)
+
+    payments Payment[]
+
+    hostReviews  HostReview[]
+    eventReviews EventReview[]
+
+    created_at      DateTime      @default(now())
+    updated_at      DateTime      @updatedAt
+    eventCategory   EventCategory @relation(fields: [eventCategoryId], references: [id])
+    eventCategoryId String
+}
+
+model EventCategory {
+    id         String   @id @default(uuid())
+    name       String   @unique
+    events     Event[]
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+}
+
+model EventParticipant {
+    id         String            @id @default(uuid())
+    eventId    String            @unique
+    event      Event             @relation(fields: [eventId], references: [id])
+    userId     String            @unique
+    user       UserProfile       @relation(fields: [userId], references: [userId])
+    status     ParticipantStatus @default(PENDING_PAYMENT)
+    paymentId  Payment?          @relation(fields: [id], references: [id])
+    joined_at  DateTime          @default(now())
+    updated_at DateTime          @updatedAt
+}
