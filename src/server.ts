@@ -1,16 +1,16 @@
 import { Server } from "http";
 import app from "./app";
+import { envSecrets } from "./app/configs/env";
 import { prisma } from "./app/db/prisma";
-
 
 let server: Server;
 
 const startServer = async () => {
   try {
     await prisma.$connect();
-    server = app.listen(4000, () => {
+    server = app.listen(envSecrets.PORT, () => {
       console.log(
-        `Server is running on port `
+        `Server is running on port ${envSecrets.PORT} in ${envSecrets.NODE_ENV} mode.`
       );
     });
   } catch (error) {
