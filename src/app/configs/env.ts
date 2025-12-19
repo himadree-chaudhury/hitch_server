@@ -14,4 +14,12 @@ export const envSecrets = cleanEnv(process.env, {
   CLOUDINARY_CLOUD_NAME: str(),
   CLOUDINARY_API_KEY: str(),
   CLOUDINARY_API_SECRET: str(),
+  REDIS_USERNAME: str(),
+  REDIS_PASSWORD: str(),
+  REDIS_HOST: str(),
+  REDIS_PORT: num(),
+  SMTP_HOST: str(),
+  SMTP_PORT: num(),
+  SMTP_USER: str(),
+  SMTP_PASS: str(),
 });

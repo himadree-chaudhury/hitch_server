@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../configs/db";
-import { User } from "../db/prisma/generated/prisma";
 import { CustomError } from "../utils/error";
 import { verifyAccessToken } from "../utils/jwt";
+import { UserStatus } from "../types/user.type";
+import { User } from "@prisma/client";
 
 export const checkAuth =
   (...allowedRoles: string[]) =>
@@ -42,7 +43,7 @@ export const checkAuth =
         });
         return next(error);
       }
-      if (user.isBlocked) {
+      if (user.status === UserStatus.BLOCKED || user.status === UserStatus.BANNED) {
         const error = CustomError.forbidden({
           message: "Access denied",
           errors: ["Your account is blocked or deleted."],

@@ -4,7 +4,7 @@ model User {
   password     String?
   provider     String?
   verification Boolean    @default(false)
-  role         UserRole   @default(User)
+  role         UserRole   @default(USER)
   status       UserStatus @default(ACTIVE)
   created_at   DateTime   @default(now())
   updated_at   DateTime   @updatedAt

@@ -1,17 +1,16 @@
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
-
+import { envSecrets } from "../configs/env";
 import { CustomError } from "./error";
-import envVariables from "../configs/env";
 
 export const generateAccessToken = (payload: JwtPayload) => {
-  const token = jwt.sign(payload, envVariables.JWT_ACCESS_SECRET, {
-    expiresIn: envVariables.JWT_ACCESS_EXPIRES_IN,
+  const token = jwt.sign(payload, envSecrets.JWT_ACCESS_SECRET, {
+    expiresIn: envSecrets.JWT_ACCESS_EXPIRES_IN,
   } as SignOptions);
   return token;
 };
 export const generateRefreshToken = (payload: JwtPayload) => {
-  const token = jwt.sign(payload, envVariables.JWT_REFRESH_SECRET, {
-    expiresIn: envVariables.JWT_REFRESH_EXPIRES_IN,
+  const token = jwt.sign(payload, envSecrets.JWT_REFRESH_SECRET, {
+    expiresIn: envSecrets.JWT_REFRESH_EXPIRES_IN,
   } as SignOptions);
   return token;
 };
@@ -20,7 +19,7 @@ export const verifyAccessToken = (token: string) => {
   try {
     const decoded = jwt.verify(
       token,
-      envVariables.JWT_ACCESS_SECRET
+      envSecrets.JWT_ACCESS_SECRET
     ) as JwtPayload;
     return decoded;
   } catch (err: any) {
@@ -36,7 +35,7 @@ export const verifyRefreshToken = (token: string) => {
   try {
     const decoded = jwt.verify(
       token,
-      envVariables.JWT_REFRESH_SECRET
+      envSecrets.JWT_REFRESH_SECRET
     ) as JwtPayload;
     return decoded;
   } catch (err: any) {
