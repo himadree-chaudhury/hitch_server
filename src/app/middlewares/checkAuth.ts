@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { prisma } from "../configs/db";
 import { CustomError } from "../utils/error";
 import { verifyAccessToken } from "../utils/jwt";
 import { UserStatus } from "../types/user.type";
 import { User } from "@prisma/client";
+import { prisma } from "../db/prisma";
 
 export const checkAuth =
   (...allowedRoles: string[]) =>
@@ -22,7 +22,6 @@ export const checkAuth =
       }
 
       const isTokenValid = verifyAccessToken(accessToken);
-      // console.log(isTokenValid);
       if (!isTokenValid) {
         const error = CustomError.unauthorized({
           message: "Invalid or expired token.",
@@ -46,7 +45,7 @@ export const checkAuth =
       if (user.status === UserStatus.BLOCKED || user.status === UserStatus.BANNED) {
         const error = CustomError.forbidden({
           message: "Access denied",
-          errors: ["Your account is blocked or deleted."],
+          errors: ["Your account is blocked or banned."],
           hints: "Please contact support for further assistance.",
         });
         return next(error);

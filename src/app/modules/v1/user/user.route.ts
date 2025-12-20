@@ -1,9 +1,12 @@
 import { Router } from "express";
-import { UserRole } from "../../../db/prisma/generated/prisma";
 import { checkAuth } from "../../../middlewares/checkAuth";
 import { validateRequest } from "../../../middlewares/validateRequest";
+import { UserRole } from "../../../types/user.type";
 import { userController } from "./user.controller";
-import { userValidationSchema } from "./user.validation";
+import {
+  userProfileValidationSchema,
+  userValidationSchema,
+} from "./user.validation";
 
 export const userRouter = Router();
 
@@ -18,4 +21,17 @@ userRouter.get(
   "/me",
   checkAuth(...Object.values(UserRole)),
   userController.getUser
+);
+
+userRouter.get(
+  "/profile",
+  checkAuth(...Object.values(UserRole)),
+  userController.getUserProfile
+);
+
+userRouter.put(
+  "/profile",
+  checkAuth(...Object.values(UserRole)),
+  validateRequest(userProfileValidationSchema),
+  userController.updateUserProfile
 );

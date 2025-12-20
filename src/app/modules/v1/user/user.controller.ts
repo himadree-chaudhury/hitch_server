@@ -17,7 +17,13 @@ const credentialRegister = asyncTryCatch(
 );
 
 const getAllUsers = asyncTryCatch(async (req: Request, res: Response) => {
-  res.send("Get All Users");
+  const users = await userService.getAllUsers();
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Users retrieved successfully",
+    data: users,
+  });
 });
 
 const getUser = asyncTryCatch(async (req: Request, res: Response) => {
@@ -31,8 +37,34 @@ const getUser = asyncTryCatch(async (req: Request, res: Response) => {
   });
 });
 
+const getUserProfile = asyncTryCatch(async (req: Request, res: Response) => {
+  const userId = req?.authUser?.id;
+  const user = await userService.getUserProfile(userId);
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "User profile retrieved successfully",
+    data: user,
+  });
+});
+
+const updateUserProfile = asyncTryCatch(
+  async (req: Request, res: Response) => {
+    const userId = req?.authUser?.id;
+    const updatedProfile = await userService.updateUserProfile(userId, req.body);
+    genericResponse(res, {
+      success: true,
+      status: httpStatus.OK,
+      message: "User profile updated successfully",
+      data: updatedProfile,
+    });
+  }
+);
+
 export const userController = {
   credentialRegister,
   getAllUsers,
   getUser,
+  getUserProfile,
+  updateUserProfile,
 };

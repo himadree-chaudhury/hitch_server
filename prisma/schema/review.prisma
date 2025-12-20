@@ -8,8 +8,8 @@ model HostReview {
     host   HostProfile @relation(fields: [hostId], references: [userId])
     rating     Int
     comment    String
-    created_at DateTime @default(now())
-    updated_at DateTime @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model EventReview {
@@ -20,6 +20,6 @@ model EventReview {
     reviewer   UserProfile @relation(fields: [reviewerId], references: [userId])
     rating     Int
     comment    String
-    created_at DateTime    @default(now())
-    updated_at DateTime    @updatedAt
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
 }

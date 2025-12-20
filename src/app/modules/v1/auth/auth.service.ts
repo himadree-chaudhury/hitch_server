@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
-import { prisma } from "../../../configs/db";
-import { User } from "../../../db/prisma/generated/prisma";
+
+import { User } from "@prisma/client";
+import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 import {
   generateAccessToken,
@@ -71,14 +72,6 @@ const getNewAccessToken = async (payload: string) => {
     throw error;
   }
 
-  if (user.isBlocked) {
-    const error = CustomError.forbidden({
-      message: "Access denied",
-      errors: ["Your account is blocked or deleted."],
-      hints: "Please contact support for further assistance.",
-    });
-    throw error;
-  }
   const jwtPayload = {
     id: user.id,
     email: user.email,

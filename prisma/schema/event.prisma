@@ -26,8 +26,8 @@ model Event {
     rating              Int           @default(0)
     reviewCount         Int           @default(0)
     totalViews          Int           @default(0)
-    created_at          DateTime      @default(now())
-    updated_at          DateTime      @updatedAt
+    createdAt           DateTime      @default(now())
+    updatedAt           DateTime      @updatedAt
 
     payments          Payment[]
     eventParticipants EventParticipant[]
@@ -38,8 +38,8 @@ model Event {
 model EventCategory {
     id         String   @id @default(uuid())
     name       String   @unique
-    created_at DateTime @default(now())
-    updated_at DateTime @updatedAt
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
 
     events Event[]
 }
@@ -53,6 +53,6 @@ model EventParticipant {
     status     ParticipantStatus @default(PENDING_PAYMENT)
     paymentId  String?           @unique
     payment    Payment?          @relation(fields: [paymentId], references: [id])
-    joined_at  DateTime          @default(now())
-    updated_at DateTime          @updatedAt
+    joinedAt  DateTime          @default(now())
+    updatedAt DateTime          @updatedAt
 }

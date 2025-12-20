@@ -9,7 +9,7 @@ model Payment {
     stripe_payment_intent_id String
     stripe_charge_id         String?
     status                   PaymentStatus      @default(REQUIRES_PAYMENT_METHOD)
-    created_at               DateTime           @default(now())
-    updated_at               DateTime           @updatedAt
+    createdAt                DateTime           @default(now())
+    updatedAt                DateTime           @updatedAt
     eventParticipants        EventParticipant[]
 }
