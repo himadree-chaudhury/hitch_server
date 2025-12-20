@@ -29,8 +29,8 @@ userRouter.get(
   userController.getUserProfile
 );
 
-userRouter.put(
-  "/profile",
+userRouter.patch(
+  "/update-profile",
   checkAuth(...Object.values(UserRole)),
   validateRequest(userProfileValidationSchema),
   userController.updateUserProfile

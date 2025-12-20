@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { UserRole } from "../../../db/prisma/generated/prisma";
 import { checkAuth } from "../../../middlewares/checkAuth";
 import { validateRequest } from "../../../middlewares/validateRequest";
+import { UserRole } from "../../../types/user.type";
 import { authController } from "./auth.controller";
 import { authValidationSchema } from "./auth.validation";
 

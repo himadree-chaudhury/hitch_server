@@ -10,7 +10,9 @@ const credentialLogin = asyncTryCatch(async (req: Request, res: Response) => {
   const payload = req.body;
   const userTokens = await authService.credentialLogin(payload);
 
-  setCookie(res, userTokens);
+  if (userTokens.accessToken && userTokens.refreshToken) {
+    setCookie(res, userTokens);
+  }
 
   genericResponse(res, {
     success: true,

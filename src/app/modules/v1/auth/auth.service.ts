@@ -43,6 +43,7 @@ const credentialLogin = async (payload: Pick<User, "email" | "password">) => {
 
   const userAccessToken = generateAccessToken(jwtPayload);
   const userSessionToken = generateRefreshToken(jwtPayload);
+  
 
   return {
     accessToken: userAccessToken,
