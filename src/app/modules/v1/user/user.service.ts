@@ -88,6 +88,12 @@ const getUser = async (email: string) => {
 const getUserProfile = async (userId: string) => {
   const user = await prisma.userProfile.findUnique({
     where: { userId },
+    include: {
+      eventsJoined: true,
+      payments: true,
+      hostReviews: true,
+      eventReviews: true,
+    },
   });
 
   if (!user) {

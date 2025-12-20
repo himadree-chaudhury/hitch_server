@@ -10,7 +10,6 @@ const storage = new CloudinaryStorage({
       const original = file.originalname.toLowerCase();
       const lastDot = original.lastIndexOf(".");
       const base = lastDot !== -1 ? original.slice(0, lastDot) : original;
-      const ext = lastDot !== -1 ? original.slice(lastDot + 1) : "";
 
       // clean the base name
       const safeBase = base.replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
@@ -18,7 +17,7 @@ const storage = new CloudinaryStorage({
       // unique name with extension kept
       return `${Math.random()
         .toString(36)
-        .substring(2, 8)}-${safeBase}-${Date.now()}${ext ? "." + ext : ""}`;
+        .substring(2, 8)}-${safeBase}-${Date.now()}`;
     },
   },
 });

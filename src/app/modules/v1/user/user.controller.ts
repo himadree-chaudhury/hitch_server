@@ -51,7 +51,9 @@ const getUserProfile = asyncTryCatch(async (req: Request, res: Response) => {
 const updateUserProfile = asyncTryCatch(
   async (req: Request, res: Response) => {
     const userId = req?.authUser?.id;
-    const updatedProfile = await userService.updateUserProfile(userId, req.body);
+
+    const imageUrl = req.file?.path;
+    const updatedProfile = await userService.updateUserProfile(userId, { ...req.body, imageUrl });
     genericResponse(res, {
       success: true,
       status: httpStatus.OK,

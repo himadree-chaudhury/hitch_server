@@ -7,6 +7,7 @@ import {
   userProfileValidationSchema,
   userValidationSchema,
 } from "./user.validation";
+import { multerConfig } from "../../../configs/multer";
 
 export const userRouter = Router();
 
@@ -32,6 +33,7 @@ userRouter.get(
 userRouter.patch(
   "/update-profile",
   checkAuth(...Object.values(UserRole)),
+  multerConfig.single("profileImage"),
   validateRequest(userProfileValidationSchema),
   userController.updateUserProfile
 );

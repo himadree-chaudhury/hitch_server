@@ -1,15 +1,14 @@
 import { v2 as cloudinary } from "cloudinary";
-import envVariables from "./env";
+import { envSecrets } from "./env";
 
-
-  // Configuration
+// Configuration
 cloudinary.config({
-    cloud_name: envVariables.CLOUDINARY_CLOUD_NAME,
-    api_key: envVariables.CLOUDINARY_API_KEY,
-    api_secret: envVariables.CLOUDINARY_API_SECRET,
-  });
+  cloud_name: envSecrets.CLOUDINARY_CLOUD_NAME,
+  api_key: envSecrets.CLOUDINARY_API_KEY,
+  api_secret: envSecrets.CLOUDINARY_API_SECRET,
+});
 
-  // Upload an image
+// Upload an image
 //   const uploadResult = await cloudinary.uploader
 //     .upload(
 //       "https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg",
@@ -23,22 +22,22 @@ cloudinary.config({
 
 //   console.log(uploadResult);
 
-  // Optimize delivery by resizing and applying auto-format and auto-quality
-  const optimizeUrl = cloudinary.url("shoes", {
-    fetch_format: "auto",
-    quality: "auto",
-  });
+// Optimize delivery by resizing and applying auto-format and auto-quality
+const optimizeUrl = cloudinary.url("shoes", {
+  fetch_format: "auto",
+  quality: "auto",
+});
 
-  console.log(optimizeUrl);
+console.log(optimizeUrl);
 
-  // Transform the image: auto-crop to square aspect_ratio
-  const autoCropUrl = cloudinary.url("shoes", {
-    crop: "auto",
-    gravity: "auto",
-    width: 500,
-    height: 500,
-  });
+// Transform the image: auto-crop to square aspect_ratio
+const autoCropUrl = cloudinary.url("shoes", {
+  crop: "auto",
+  gravity: "auto",
+  width: 500,
+  height: 500,
+});
 
-  console.log(autoCropUrl);
+console.log(autoCropUrl);
 
 export const cloudinaryConfig = cloudinary;
