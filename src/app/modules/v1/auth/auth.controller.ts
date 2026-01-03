@@ -55,8 +55,73 @@ const logout = asyncTryCatch(async (req: Request, res: Response) => {
   });
 });
 
+const changePassword = asyncTryCatch(async (req: Request, res: Response) => {
+  const userEmail = req.authUser.email;
+  await authService.changePassword(userEmail, req.body);
+
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Password changed successfully",
+  });
+});
+
+const forgetPassword = asyncTryCatch(async (req: Request, res: Response) => {
+  await authService.forgetPassword(req.body.email);
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "If an account exists, an OTP has been sent to your email.",
+  });
+});
+
+const resetPassword = asyncTryCatch(async (req: Request, res: Response) => {
+  await authService.resetPassword(req.body);
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Password has been reset successfully. Please login.",
+  });
+});
+
+const verifyRequest = asyncTryCatch(async (req: Request, res: Response) => {
+  const userEmail = req.authUser.email;
+  await authService.requestVerification(userEmail);
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Verification OTP sent.",
+  });
+});
+
+const verifyAccount = asyncTryCatch(async (req: Request, res: Response) => {
+  await authService.verifyAccount(req.body);
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Account verified successfully.",
+  });
+});
+
+// Google Login Callback
+const googleCallback = asyncTryCatch(async (req: Request, res: Response) => {
+  // Passport middleware puts the Google Profile in req.user
+  const userTokens = await authService.googleLogin(req.user);
+
+  setCookie(res, userTokens);
+
+  // Redirect to frontend
+  res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+});
+
 export const authController = {
   credentialLogin,
   getNewAccessToken,
   logout,
+  changePassword,
+  forgetPassword,
+  resetPassword,
+  verifyRequest,
+  verifyAccount,
+  googleCallback,
 };
