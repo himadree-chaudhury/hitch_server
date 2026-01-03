@@ -39,6 +39,7 @@ model HostProfile {
   id            String       @id @default(uuid())
   userId        String       @unique
   user          User         @relation(fields: [userId], references: [id])
+  hostStatus   HostStatus   @default(PENDING)
   ratingCount   Int?         @default(0)
   averageRating Float?       @default(0)
   createdAt DateTime @default(now())

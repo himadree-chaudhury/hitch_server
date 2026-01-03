@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { CustomError } from "../utils/error";
 
 export const globalErrorHandler = (
+  // @ts-ignore
   err: any,
   req: Request,
   res: Response,

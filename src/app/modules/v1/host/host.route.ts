@@ -6,13 +6,13 @@ import { hostController } from "./host.controller";
 export const hostRouter = Router();
 
 hostRouter.get(
-  "/request-to-be-host",
-  checkAuth(...Object.values(UserRole)),
+  "/request",
+  checkAuth(UserRole.USER),
   hostController.requestToBeHost
 );
 
 
-hostRouter.put("/toggle-host-role/:email",
+hostRouter.put("/toggle-role/:email",
   checkAuth(UserRole.ADMIN),
   hostController.toggleHostRole
 );
