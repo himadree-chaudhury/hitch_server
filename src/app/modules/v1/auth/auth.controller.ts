@@ -1,10 +1,12 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { asyncTryCatch } from "../../../utils/asyncTryCatch";
 import { clearCookies, setCookie } from "../../../utils/cookie";
 import { CustomError } from "../../../utils/error";
 import { genericResponse } from "../../../utils/genericResponse";
 import { authService } from "./auth.service";
+import passport from "passport";
+import { envSecrets } from "../../../configs/env";
 
 const credentialLogin = asyncTryCatch(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -95,7 +97,8 @@ const verifyRequest = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const verifyAccount = asyncTryCatch(async (req: Request, res: Response) => {
-  await authService.verifyAccount(req.body);
+  const userEmail= req.authUser.email;
+  await authService.verifyAccount(userEmail, req.body);
   genericResponse(res, {
     success: true,
     status: httpStatus.OK,
@@ -103,15 +106,39 @@ const verifyAccount = asyncTryCatch(async (req: Request, res: Response) => {
   });
 });
 
-// Google Login Callback
+const googleLogin = asyncTryCatch(
+  async (req: Request, res: Response, next?: NextFunction) => {
+  
+    const redirectUrl = req.query.redirectUrl || "/";
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+      state: redirectUrl as string,
+    })(req, res, next);
+  }
+);
+
 const googleCallback = asyncTryCatch(async (req: Request, res: Response) => {
-  // Passport middleware puts the Google Profile in req.user
-  const userTokens = await authService.googleLogin(req.user);
+  const redirectTo = (req.query.state as string) || "/";
 
-  setCookie(res, userTokens);
+  const user = req.user; // *👈 This "user" is set by passport after successful authentication
+  if (!user) {
+    const error = CustomError.unauthorized({
+      message: "Google authentication failed",
+      errors: ["Unable to authenticate using Google."],
+      hints: "Please try logging in again.",
+    });
+    throw error;
+  }
 
-  // Redirect to frontend
-  res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+  const loginInfo = await authService.googleLogin(user);
+
+  // *Set cookies for access and refresh tokens
+  setCookie(res, {
+    accessToken: loginInfo.accessToken,
+    refreshToken: loginInfo.refreshToken,
+  });
+
+  // res.redirect(`${envSecrets.FRONTEND_URL}/${loginInfo.redirectTo}`);
 });
 
 export const authController = {
@@ -123,5 +150,6 @@ export const authController = {
   resetPassword,
   verifyRequest,
   verifyAccount,
+  googleLogin,
   googleCallback,
 };

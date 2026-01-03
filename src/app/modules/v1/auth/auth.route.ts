@@ -55,15 +55,12 @@ authRouter.post(
 
 authRouter.post(
   "/verify-account",
+  checkAuth(...Object.values(UserRole)),
   validateRequest(verifyAccountSchema),
   authController.verifyAccount
 );
 
-// Google Routes
-authRouter.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+authRouter.get("/google", authController.googleLogin);
 
 authRouter.get(
   "/google/callback",

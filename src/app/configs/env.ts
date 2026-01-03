@@ -22,4 +22,8 @@ export const envSecrets = cleanEnv(process.env, {
   SMTP_PORT: num(),
   SMTP_USER: str(),
   SMTP_PASS: str(),
+  GOOGLE_CLIENT_ID: str(),
+  GOOGLE_CLIENT_SECRET: str(),
+  GOOGLE_CALLBACK_URL: str(),
+  FRONTEND_URL: str(),
 });

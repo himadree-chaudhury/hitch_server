@@ -39,6 +39,5 @@ export const resetPasswordSchema = z.object({
 });
 
 export const verifyAccountSchema = z.object({
-  email: z.email("Please enter a valid email address"),
   otp: z.string().min(6, "OTP is required"),
 });

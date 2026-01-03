@@ -5,6 +5,7 @@ import httpStatus from "http-status-codes";
 import morgan from "morgan";
 import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
 import { router } from "./app/routes";
+import passport from "passport";
 
 const app = express();
 app.use(morgan("dev"));
@@ -18,6 +19,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(passport.initialize());
 
 app.use("/api/v1", router);
 

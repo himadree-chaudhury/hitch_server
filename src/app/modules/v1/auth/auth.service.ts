@@ -1,6 +1,7 @@
 import { Provider, User, UserStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { envSecrets } from "../../../configs/env";
 import { redisClient } from "../../../configs/redis";
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
@@ -109,7 +110,11 @@ const changePassword = async (
     throw error;
   }
 
-  const hashedPassword = await bcrypt.hash(payload.newPassword, 10);
+  const hashedPassword = await bcrypt.hash(
+    payload.newPassword,
+    envSecrets.SALT_ROUNDS
+  );
+
   await prisma.user.update({
     where: { email: userEmail },
     data: { password: hashedPassword },
@@ -224,20 +229,15 @@ const requestVerification = async (email: string) => {
   await sendMail(emailBody);
 };
 
-
-const verifyAccount = async (payload: {
-  email: string;
-  otp: string;
-}) => {
-
-   const user = await prisma.user.findUnique({ where: { email: payload.email } });
-   if (!user) {
-     const error = CustomError.notFound({
-       message: "User not found",
-       errors: ["No user found with the provided email."],
-       hints: "Please check your credentials and try again.",
-     });
-     throw error;
+const verifyAccount = async (email: string, payload: { otp: string }) => {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    const error = CustomError.notFound({
+      message: "User not found",
+      errors: ["No user found with the provided email."],
+      hints: "Please check your credentials and try again.",
+    });
+    throw error;
   }
   const redisKey = `${user?.role}[${user?.id}]:${user?.email}`;
   const storedOtp = await redisClient.get(redisKey);
@@ -252,14 +252,14 @@ const verifyAccount = async (payload: {
   }
 
   await prisma.user.update({
-    where: { email: payload.email },
+    where: { email },
     data: { verification: true, status: UserStatus.ACTIVE },
   });
 
   await redisClient.del(redisKey);
 };
 
-// Google Login Logic
+
 const googleLogin = async (profile: any) => {
   const email = profile.emails[0].value;
 
@@ -271,7 +271,7 @@ const googleLogin = async (profile: any) => {
       data: {
         email,
         provider: Provider.GOOGLE,
-        verification: true, // Google emails are trusted/verified
+        verification: true,
         userProfile: {
           create: {
             firstName: profile.name.givenName,
