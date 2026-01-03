@@ -25,5 +25,6 @@ export const envSecrets = cleanEnv(process.env, {
   GOOGLE_CLIENT_ID: str(),
   GOOGLE_CLIENT_SECRET: str(),
   GOOGLE_CALLBACK_URL: str(),
+  STRIPE_SECRET_KEY: str(),
   FRONTEND_URL: str(),
 });
