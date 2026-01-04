@@ -1,12 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
+import passport from "passport";
 import { asyncTryCatch } from "../../../utils/asyncTryCatch";
 import { clearCookies, setCookie } from "../../../utils/cookie";
 import { CustomError } from "../../../utils/error";
 import { genericResponse } from "../../../utils/genericResponse";
 import { authService } from "./auth.service";
-import passport from "passport";
-import { envSecrets } from "../../../configs/env";
 
 const credentialLogin = asyncTryCatch(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -97,7 +96,7 @@ const verifyRequest = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const verifyAccount = asyncTryCatch(async (req: Request, res: Response) => {
-  const userEmail= req.authUser.email;
+  const userEmail = req.authUser.email;
   await authService.verifyAccount(userEmail, req.body);
   genericResponse(res, {
     success: true,
@@ -108,7 +107,6 @@ const verifyAccount = asyncTryCatch(async (req: Request, res: Response) => {
 
 const googleLogin = asyncTryCatch(
   async (req: Request, res: Response, next?: NextFunction) => {
-  
     const redirectUrl = req.query.redirectUrl || "/";
     passport.authenticate("google", {
       scope: ["profile", "email"],

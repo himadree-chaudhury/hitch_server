@@ -1,27 +1,162 @@
 import {
-  Prisma,
+  Event,
   EventStatus,
+  HostStatus,
   ParticipantStatus,
-  PaymentStatus,
+  Prisma,
 } from "@prisma/client";
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 import { sendMail } from "../../../utils/sendMail";
 import { paymentService } from "../payment/payment.service";
-// 1. Create Event
-const createEvent = async (userId: string, payload: any) => {
-  // Generate a simple slug
-  const slug =
-    payload.title.toLowerCase().replace(/ /g, "-") + "-" + Date.now();
 
-  const event = await prisma.event.create({
-    data: {
-      ...payload,
-      slug,
-      hostId: userId,
+const createEvent = async (
+  hostId: string,
+  payload: Event & { eventCategories: string[] }
+) => {
+  const host = await prisma.hostProfile.findUnique({
+    where: { userId: hostId },
+  });
+
+  if (!host || host.hostStatus !== HostStatus.APPROVED) {
+    const error = CustomError.badRequest({
+      message: "Host profile not found",
+      errors: ["You must have a host profile to create an event."],
+      hints: "Please create a host profile and try again.",
+    });
+    throw error;
+  }
+
+  const slug =
+    payload.title
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-]/g, "") +
+    "-" +
+    Date.now();
+  const { eventCategories, ...eventData } = payload;
+
+  const response = await prisma.$transaction(async (tx) => {
+    const event = await tx.event.create({
+      data: {
+        ...eventData,
+        hostId,
+        slug,
+      },
+    });
+
+    if (eventCategories && eventCategories.length > 0) {
+      await Promise.all(
+        eventCategories.map(async (category) => {
+          const createdCategory = await tx.eventCategory.upsert({
+            where: { name: category },
+            update: {},
+            create: { name: category },
+          });
+          await tx.eventCategoryEvent.create({
+            data: { eventId: event.id, eventCategoryId: createdCategory.id },
+          });
+        })
+      );
+    }
+
+    return await tx.event.findUnique({
+      where: { slug: event.slug },
+      include: {
+        eventCategories: {
+          select: {
+            eventCategory: {
+              select: { name: true, id: true },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  return response;
+};
+
+const updateEvent = async (
+  hostId: string,
+  slug: string,
+  payload: Partial<Event> & { eventCategories?: string[] }
+) => {
+  const event = await prisma.event.findUnique({
+    where: { slug },
+  });
+
+  if (!event) {
+    const error = CustomError.notFound({
+      message: "Event not found",
+      errors: ["The event you are trying to update does not exist."],
+      hints: "Please check the event slug and try again.",
+    });
+    throw error;
+  }
+
+  if (event.hostId !== hostId) {
+    const error = CustomError.unauthorized({
+      message: "Unauthorized",
+      errors: ["You are not authorized to update this event."],
+      hints: "Please check your credentials and try again.",
+    });
+    throw error;
+  }
+
+  const { eventCategories, ...eventData } = payload;
+
+  let newSlug: string | undefined;
+  if (eventData.title && eventData.title !== event.title) {
+    newSlug =
+      eventData.title
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9\-]/g, "") +
+      "-" +
+      Date.now();
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.event.update({
+      where: { id: event.id },
+      data: {
+        ...eventData,
+        slug: newSlug || event.slug,
+      },
+    });
+
+    if (eventCategories && eventCategories.length > 0) {
+      await tx.eventCategoryEvent.deleteMany({
+        where: { eventId: event.id },
+      });
+      await Promise.all(
+        eventCategories.map(async (category) => {
+          const createdCategory = await tx.eventCategory.upsert({
+            where: { name: category },
+            update: {},
+            create: { name: category },
+          });
+          await tx.eventCategoryEvent.create({
+            data: { eventId: event.id, eventCategoryId: createdCategory.id },
+          });
+        })
+      );
+    }
+  });
+
+  return await prisma.event.findUnique({
+    where: { id: event.id },
+    include: {
+      eventCategories: {
+        select: {
+          eventCategory: {
+            select: { name: true, id: true },
+          },
+        },
+      },
     },
   });
-  return event;
 };
 
 // 2. Get All Events (with filters)
@@ -111,8 +246,7 @@ const joinEvent = async (userId: string, eventId: string) => {
       });
     });
 
-      // Email Notifications
-      
+    // Email Notifications
 
     await sendMail({
       to: user!.email,
@@ -172,12 +306,12 @@ const leaveEvent = async (userId: string, eventId: string) => {
     select: { email: true },
   });
   if (userEmail)
-      await sendMail({
-        to: userEmail.email,
-        subject: "Left Event Successfully",
-        text: `You have successfully left the event ${participant.event.title}.`,
-        html: `<p>You have successfully left the event <strong>${participant.event.title}</strong>.</p>`,
-      });
+    await sendMail({
+      to: userEmail.email,
+      subject: "Left Event Successfully",
+      text: `You have successfully left the event ${participant.event.title}.`,
+      html: `<p>You have successfully left the event <strong>${participant.event.title}</strong>.</p>`,
+    });
 
   return { message: "Left event successfully" };
 };
@@ -185,7 +319,7 @@ const leaveEvent = async (userId: string, eventId: string) => {
 // 6. Review Event
 const reviewEvent = async (userId: string, eventId: string, payload: any) => {
   const participant = await prisma.eventParticipant.findUnique({
-    where: { userId, eventId  }, // Assuming compound unique key in schema or findFirst
+    where: { userId, eventId }, // Assuming compound unique key in schema or findFirst
   });
 
   // Note: Schema provided has `eventId` @unique and `userId` @unique in EventParticipant which implies 1 user 1 event globally?
@@ -263,6 +397,7 @@ const changeEventStatus = async (
 
 export const eventService = {
   createEvent,
+  updateEvent,
   getAllEvents,
   getEventDetails,
   joinEvent,

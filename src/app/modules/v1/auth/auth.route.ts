@@ -47,7 +47,7 @@ authRouter.post(
   authController.resetPassword
 );
 
-authRouter.post(
+authRouter.get(
   "/verify-request",
   checkAuth(...Object.values(UserRole)),
   authController.verifyRequest

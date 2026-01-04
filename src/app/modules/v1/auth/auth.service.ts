@@ -145,8 +145,8 @@ const forgetPassword = async (email: string) => {
   const emailBody = {
     to: `${user?.email}`,
     subject: "Verify your email",
-    text: `Your verification code is ${otp}. It will expire in 2 minutes.`,
-    html: `<p>Your verification code is <strong>${otp}</strong>. It will expire in 2 minutes.</p>`,
+    text: `Your verification code is ${otp}. It will expire in 5 minutes.`,
+    html: `<p>Your verification code is <strong>${otp}</strong>. It will expire in 5 minutes.</p>`,
   };
 
   await sendMail(emailBody);

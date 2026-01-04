@@ -1,6 +1,7 @@
 import { Server } from "http";
 import app from "./app";
 import { envSecrets } from "./app/configs/env";
+import { connectRedis } from "./app/configs/redis";
 import { prisma } from "./app/db/prisma";
 
 let server: Server;
@@ -20,6 +21,7 @@ const startServer = async () => {
 };
 
 (async () => {
+  await connectRedis();
   await startServer();
 })();
 

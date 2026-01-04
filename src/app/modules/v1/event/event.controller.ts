@@ -4,13 +4,32 @@ import { asyncTryCatch } from "../../../utils/asyncTryCatch";
 import { genericResponse } from "../../../utils/genericResponse";
 import { eventService } from "./event.service";
 
-// Events
 const createEvent = asyncTryCatch(async (req: Request, res: Response) => {
-  const result = await eventService.createEvent((req as any).user.id, req.body);
+  const hostId = req?.authUser?.id;
+  const imageUrl = req.file?.path;
+  const result = await eventService.createEvent(hostId, {
+    ...req.body,
+    imageUrl,
+  });
   genericResponse(res, {
     success: true,
     status: httpStatus.CREATED,
-    message: "Event created",
+    message: "Event created successfully.",
+    data: result,
+  });
+});
+
+const updateEvent = asyncTryCatch(async (req: Request, res: Response) => {
+  const hostId = req?.authUser?.id;
+  const imageUrl = req.file?.path;
+  const result = await eventService.updateEvent(hostId, req.params.slug, {
+    ...req.body,
+    ...(imageUrl && { imageUrl }),
+  });
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.CREATED,
+    message: "Event updated successfully.",
     data: result,
   });
 });
@@ -88,6 +107,7 @@ const changeStatus = asyncTryCatch(async (req: Request, res: Response) => {
 
 export const eventController = {
   createEvent,
+  updateEvent,
   getAllEvents,
   getEventDetails,
   joinEvent,

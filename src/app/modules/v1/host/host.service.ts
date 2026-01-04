@@ -2,6 +2,40 @@ import { HostStatus, UserRole } from "@prisma/client";
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 
+const getHostProfile = async (userId: string) => {
+  const hostProfile = await prisma.hostProfile.findUnique({
+    where: { userId },
+    include: {
+      user: {
+        select: {
+          userProfile: {
+            select: {
+              firstName: true,
+              lastName: true,
+              bio: true,
+              hostReviews: true,
+              eventReviews: true,
+              eventsJoined: true,
+              createdAt: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!hostProfile) {
+    const error = CustomError.notFound({
+      message: "Host profile not found",
+      errors: ["The requested host profile does not exist."],
+      hints: "Please check the user ID and try again.",
+    });
+    throw error;
+  }
+
+  return hostProfile;
+};
+
 const requestToBeHost = async (email: string) => {
   const user = await prisma.user.findUnique({
     where: { email },
@@ -21,6 +55,19 @@ const requestToBeHost = async (email: string) => {
       message: "Invalid request",
       errors: ["The user is either already a host or not verified."],
       hints: "Only verified users can request to become hosts.",
+    });
+    throw error;
+  }
+
+  const existingHost = await prisma.hostProfile.findUnique({
+    where: { userId: user.id },
+  });
+
+  if (existingHost && existingHost.hostStatus === HostStatus.PENDING) {
+    const error = CustomError.conflict({
+      message: "Host request already pending",
+      errors: ["A host request is already pending for this user."],
+      hints: "Please wait for the existing request to be processed.",
     });
     throw error;
   }
@@ -49,7 +96,7 @@ const toggleHostRole = async (email: string) => {
   const host = await prisma.hostProfile.findUnique({
     where: { userId: user.id },
   });
-    if (!host) {
+  if (!host) {
     const error = CustomError.notFound({
       message: "Host profile not found",
       errors: ["The requested host profile does not exist."],
@@ -79,6 +126,7 @@ const toggleHostRole = async (email: string) => {
 };
 
 export const hostService = {
+  getHostProfile,
   requestToBeHost,
   toggleHostRole,
 };

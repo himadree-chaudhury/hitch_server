@@ -1,33 +1,30 @@
 model Event {
-    id                  String        @id @default(uuid())
-    hostId              String        @unique
-    host                HostProfile   @relation(fields: [hostId], references: [userId])
+    id                  String               @id @default(uuid())
+    hostId              String               
+    host                HostProfile          @relation(fields: [hostId], references: [userId])
     title               String
-    slug                String        @unique
+    slug                String               @unique
     type                EventType
-    eventCategoryId     String
-    eventCategory       EventCategory @relation(fields: [eventCategoryId], references: [id])
+    eventCategories     EventCategoryEvent[]
     description         String?
     startTime           DateTime
     endTime             DateTime
     city                String
     country             String
     address             String
-    latitude            Float
-    longitude           Float
     minParticipants     Int
     maxParticipants     Int?
-    currentParticipants Int           @default(0)
+    currentParticipants Int                  @default(0)
     imageUrl            String?
     joiningFee          Float
     currency            String
-    status              EventStatus   @default(UPCOMING)
-    isFeatured          Boolean       @default(false)
-    rating              Int           @default(0)
-    reviewCount         Int           @default(0)
-    totalViews          Int           @default(0)
-    createdAt           DateTime      @default(now())
-    updatedAt           DateTime      @updatedAt
+    status              EventStatus          @default(UPCOMING)
+    isFeatured          Boolean              @default(false)
+    rating              Int                  @default(0)
+    reviewCount         Int                  @default(0)
+    totalViews          Int                  @default(0)
+    createdAt           DateTime             @default(now())
+    updatedAt           DateTime             @updatedAt
 
     payments          Payment[]
     eventParticipants EventParticipant[]
@@ -36,23 +33,34 @@ model Event {
 }
 
 model EventCategory {
-    id         String   @id @default(uuid())
-    name       String   @unique
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
+    id        String   @id @default(uuid())
+    name      String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-    events Event[]
+    events EventCategoryEvent[]
+}
+
+model EventCategoryEvent {
+    eventId         String        
+    event           Event         @relation(fields: [eventId], references: [id])
+    eventCategoryId String        
+    eventCategory   EventCategory @relation(fields: [eventCategoryId], references: [id])
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+
+    @@id([eventId, eventCategoryId])
 }
 
 model EventParticipant {
-    id         String            @id @default(uuid())
-    eventId    String            @unique
-    event      Event             @relation(fields: [eventId], references: [id])
-    userId     String            @unique
-    user       UserProfile       @relation(fields: [userId], references: [userId])
-    status     ParticipantStatus @default(PENDING_PAYMENT)
-    paymentId  String?           @unique
-    payment    Payment?          @relation(fields: [paymentId], references: [id])
+    id        String            @id @default(uuid())
+    eventId   String            @unique
+    event     Event             @relation(fields: [eventId], references: [id])
+    userId    String            @unique
+    user      UserProfile       @relation(fields: [userId], references: [userId])
+    status    ParticipantStatus @default(PENDING_PAYMENT)
+    paymentId String?           @unique
+    payment   Payment?          @relation(fields: [paymentId], references: [id])
     joinedAt  DateTime          @default(now())
     updatedAt DateTime          @updatedAt
 }

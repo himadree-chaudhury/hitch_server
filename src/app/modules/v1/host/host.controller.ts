@@ -4,13 +4,24 @@ import { asyncTryCatch } from "../../../utils/asyncTryCatch";
 import { genericResponse } from "../../../utils/genericResponse";
 import { hostService } from "./host.service";
 
+const getHostProfile = asyncTryCatch(async (req: Request, res: Response) => {
+  const userId = req.params.hostId;
+  const hostProfile = await hostService.getHostProfile(userId);
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Host profile retrieved successfully",
+    data: hostProfile,
+  });
+});
+
 const requestToBeHost = asyncTryCatch(async (req: Request, res: Response) => {
   const userEmail = req.authUser.email;
   const response = await hostService.requestToBeHost(userEmail);
   genericResponse(res, {
     success: true,
     status: httpStatus.OK,
-    message: "Account verified successfully.",
+    message: "Request to be a host submitted successfully.",
     data: response,
   });
 });
@@ -27,6 +38,7 @@ const toggleHostRole = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 export const hostController = {
+  getHostProfile,
   requestToBeHost,
   toggleHostRole,
 };
