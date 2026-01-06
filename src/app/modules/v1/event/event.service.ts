@@ -1,8 +1,10 @@
 import {
   Event,
+  EventReview,
   EventStatus,
   HostStatus,
   ParticipantStatus,
+  PaymentStatus,
   Prisma,
 } from "@prisma/client";
 import { prisma } from "../../../db/prisma";
@@ -229,6 +231,58 @@ const getEventDetails = async (slug: string) => {
   return updatedEvent;
 };
 
+const changeEventStatus = async (
+  hostId: string,
+  slug: string,
+  status: EventStatus
+) => {
+  const event = await prisma.event.findUnique({
+    where: { slug },
+    include: {
+      eventParticipants: {
+        select: { user: { select: { user: { select: { email: true } } } } },
+      },
+    },
+  });
+
+  if (!event) {
+    const error = CustomError.notFound({
+      message: "Event not found",
+      errors: ["The event you are trying to update does not exist."],
+      hints: "Please check the event slug and try again.",
+    });
+    throw error;
+  }
+  if (event.hostId !== hostId) {
+    const error = CustomError.unauthorized({
+      message: "Unauthorized",
+      errors: ["You are not authorized to update this event."],
+      hints: "Please check your credentials and try again.",
+    });
+    throw error;
+  }
+
+  const response = await prisma.event.update({
+    where: { slug, id: event.id },
+    data: { status },
+  });
+
+  // Bulk Email Notification
+  if (status === EventStatus.CANCELLED || status === EventStatus.ONGOING) {
+    for (const p of event.eventParticipants) {
+      if (p.user?.user?.email) {
+        await sendMail({
+          to: p.user.user.email,
+          subject: `Event Status Changed: ${status}`,
+          text: `The status of the event ${event.title} has been changed to ${status}.`,
+          html: `<p>The status of the event <strong>${event.title}</strong> has been changed to <strong>${status}</strong>.</p>`,
+        });
+      }
+    }
+  }
+  return response;
+};
+
 const joinEvent = async (userId: string, slug: string) => {
   const event = await prisma.event.findUnique({
     where: { slug },
@@ -340,134 +394,144 @@ const joinEvent = async (userId: string, slug: string) => {
   }
 };
 
-// 5. Leave Event
-const leaveEvent = async (userId: string, eventId: string) => {
-  const participant = await prisma.eventParticipant.findFirst({
-    where: { userId, eventId },
-    include: { event: true, user: true }, // to get user email
-  });
-
-  if (!participant)
-    throw CustomError.notFound({ message: "You are not a participant" });
-
-  await prisma.$transaction([
-    prisma.eventParticipant.delete({ where: { id: participant.id } }),
-    prisma.event.update({
-      where: { id: eventId },
-      data: { currentParticipants: { decrement: 1 } },
-    }),
-  ]);
-
-  // Notify User
-  const userEmail = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
-  if (userEmail)
-    await sendMail({
-      to: userEmail.email,
-      subject: "Left Event Successfully",
-      text: `You have successfully left the event ${participant.event.title}.`,
-      html: `<p>You have successfully left the event <strong>${participant.event.title}</strong>.</p>`,
-    });
-
-  return { message: "Left event successfully" };
-};
-
-// 6. Review Event
-const reviewEvent = async (userId: string, eventId: string, payload: any) => {
-  const participant = await prisma.eventParticipant.findUnique({
-    where: { userId, eventId }, // Assuming compound unique key in schema or findFirst
-  });
-
-  // Note: Schema provided has `eventId` @unique and `userId` @unique in EventParticipant which implies 1 user 1 event globally?
-  // *Correction*: Usually EventParticipant has @@unique([userId, eventId]). Assuming logical fix here.
-
-  if (!participant || participant.status !== ParticipantStatus.CONFIRMED) {
-    throw CustomError.badRequest({
-      message: "You must attend the event to review it",
-    });
-  }
-
-  // Create Review
-  await prisma.eventReview.create({
-    data: {
-      reviewerId: userId, // Adjusting based on standard schema, schema provided uses reviewerId
-      eventId,
-      rating: payload.rating,
-      comment: payload.comment,
-    },
-  });
-
-  // Recalculate Average Rating
-  const aggregations = await prisma.eventReview.aggregate({
-    where: { eventId },
-    _avg: { rating: true },
-    _count: { rating: true },
-  });
-
-  await prisma.event.update({
-    where: { id: eventId },
-    data: {
-      rating: Math.round(aggregations._avg.rating || 0),
-      reviewCount: aggregations._count.rating,
-    },
-  });
-
-  return { message: "Review added successfully" };
-};
-
-const changeEventStatus = async (
-  hostId: string,
-  slug: string,
-  status: EventStatus
-) => {
+const leaveEvent = async (userId: string, slug: string) => {
   const event = await prisma.event.findUnique({
     where: { slug },
-    include: {
-      eventParticipants: {
-        select: { user: { select: { user: { select: { email: true } } } } },
-      },
-    },
   });
 
   if (!event) {
     const error = CustomError.notFound({
       message: "Event not found",
-      errors: ["The event you are trying to update does not exist."],
+      errors: ["The event you are trying to leave does not exist."],
       hints: "Please check the event slug and try again.",
     });
     throw error;
   }
-  if (event.hostId !== hostId) {
-    const error = CustomError.unauthorized({
-      message: "Unauthorized",
-      errors: ["You are not authorized to update this event."],
-      hints: "Please check your credentials and try again.",
+
+  const participant = await prisma.eventParticipant.findFirst({
+    where: { userId, eventId: event.id },
+    include: {
+      event: true,
+      user: { select: { user: { select: { email: true } } } },
+      payment: true,
+    },
+  });
+
+  if (!participant) {
+    const error = CustomError.badRequest({
+      message: "Not a participant",
+      errors: ["You are not a participant of this event."],
+      hints: "Please check your joined events.",
+    });
+    throw error;
+  }
+  if (
+    participant.status === ParticipantStatus.CANCELLED &&
+    participant.payment?.status === PaymentStatus.CANCELLED
+  ) {
+    const error = CustomError.badRequest({
+      message: "Already left",
+      errors: ["You have already left this event."],
+      hints: "Please check your joined events.",
     });
     throw error;
   }
 
-  const response = await prisma.event.update({
-    where: { slug, id: event.id },
-    data: { status },
+  const response = await prisma.$transaction(async (tx) => {
+    const participantUpdate = await tx.eventParticipant.update({
+      where: { eventId: event.id, userId },
+      data: { status: ParticipantStatus.CANCELLED },
+      include: { payment: true },
+    });
+
+    await tx.event.update({
+      where: { id: event.id },
+      data: { currentParticipants: { decrement: 1 } },
+    });
+    await tx.payment.update({
+      where: { id: participant.payment?.id },
+      data: { status: PaymentStatus.CANCELLED },
+    });
+
+    return participantUpdate;
   });
 
-  // Bulk Email Notification
-  if (status === EventStatus.CANCELLED || status === EventStatus.ONGOING) {
-    for (const p of event.eventParticipants) {
-      if (p.user?.user?.email) {
-        await sendMail({
-          to: p.user.user.email,
-          subject: `Event Status Changed: ${status}`,
-          text: `The status of the event ${event.title} has been changed to ${status}.`,
-          html: `<p>The status of the event <strong>${event.title}</strong> has been changed to <strong>${status}</strong>.</p>`,
-        });
-      }
-    }
-  }
+  await sendMail({
+    to: participant.user.user.email,
+    subject: "Left Event Successfully",
+    text: `You have successfully left the event ${participant.event.title}.`,
+    html: `<p>You have successfully left the event <strong>${participant.event.title}</strong>.</p>`,
+  });
+
   return response;
 };
+
+const reviewEvent = async (
+  userId: string,
+  slug: string,
+  payload: EventReview
+) => {
+  const event = await prisma.event.findUnique({
+    where: { slug },
+  });
+  if (!event) {
+    const error = CustomError.notFound({
+      message: "Event not found",
+      errors: ["The event you are trying to review does not exist."],
+      hints: "Please check the event slug and try again.",
+    });
+    throw error;
+  }
+
+  const participant = await prisma.eventParticipant.findUnique({
+    where: { userId, eventId: event.id },
+  });
+
+  if (
+    !participant ||
+    participant.status !== ParticipantStatus.PAID ||
+    event.status !== EventStatus.COMPLETED
+  ) {
+    const error = CustomError.badRequest({
+      message: "Cannot review event",
+      errors: [
+        "You can only review events you have participated in and that are completed.",
+      ],
+      hints: "Please check your participated events.",
+    });
+    throw error;
+  }
+
+  const response = prisma.$transaction(async (tx) => {
+    const review = await tx.eventReview.create({
+      data: {
+        reviewerId: userId,
+        eventId: event.id,
+        rating: payload.rating,
+        comment: payload.comment,
+      },
+    });
+
+    const aggregations = await tx.eventReview.aggregate({
+      where: { eventId: event.id },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    await tx.event.update({
+      where: { id: event.id },
+      data: {
+        rating: Math.round(aggregations._avg.rating || 0),
+        reviewCount: aggregations._count.rating,
+      },
+    });
+
+    return review;
+  });
+
+  return response;
+};
+
 
 export const eventService = {
   createEvent,

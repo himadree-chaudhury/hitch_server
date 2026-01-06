@@ -1,25 +1,25 @@
 model HostReview {
-    id      String @id @default(uuid())
-    eventId String @unique
-    event   Event  @relation(fields: [eventId], references: [id])
-    reviewerId String      @unique
+    id         String      @id @default(uuid())
+    eventId    String
+    event      Event       @relation(fields: [eventId], references: [id])
+    reviewerId String
     reviewer   UserProfile @relation(fields: [reviewerId], references: [userId])
-    hostId String      @unique
-    host   HostProfile @relation(fields: [hostId], references: [userId])
+    hostId     String
+    host       HostProfile @relation(fields: [hostId], references: [userId])
     rating     Int
     comment    String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt  DateTime    @default(now())
+    updatedAt  DateTime    @updatedAt
 }
 
 model EventReview {
     id         String      @id @default(uuid())
-    eventId    String      @unique
+    eventId    String
     event      Event       @relation(fields: [eventId], references: [id])
-    reviewerId String      @unique
+    reviewerId String
     reviewer   UserProfile @relation(fields: [reviewerId], references: [userId])
     rating     Int
     comment    String
-    createdAt DateTime    @default(now())
-    updatedAt DateTime    @updatedAt
+    createdAt  DateTime    @default(now())
+    updatedAt  DateTime    @updatedAt
 }

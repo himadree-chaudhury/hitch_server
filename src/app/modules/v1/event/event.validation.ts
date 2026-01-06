@@ -47,11 +47,12 @@ export const updateEventSchema = z.object({
   imageUrl: z.url("This must be a valid URL").optional(),
 });
 
-export const eventReviewSchema = z.object({
-  rating: z.number().min(1).max(5),
-  comment: z.string().min(10, "Comment must be at least 10 characters"),
-});
 
 export const changeStatusSchema = z.object({
   status: z.enum(EventStatus),
+});
+
+export const eventReviewSchema = z.object({
+  rating: z.number().min(0).max(5, "Rating must be between 0 and 5"),
+  comment: z.string().min(10, "Comment must be at least 10 characters"),
 });

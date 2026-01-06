@@ -70,7 +70,6 @@ const handleStripeWebhookEvent = async (event: Stripe.Event) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as any;
-        console.log(session.id);
         const updatedPayment = await tx.payment.update({
           where: { transactionId: session.id },
           data: {
@@ -92,7 +91,7 @@ const handleStripeWebhookEvent = async (event: Stripe.Event) => {
         const updatedPayment = await tx.payment.update({
           where: { transactionId: session.id },
           data: {
-            status: PaymentStatus.CANCELLED,
+            status: PaymentStatus.FAILED,
           },
         });
 
@@ -194,7 +193,6 @@ const confirmPaymentSuccess = async (paymentId: string) => {
 
   return response;
 };
-
 
 export const paymentService = {
   createPaymentIntent,

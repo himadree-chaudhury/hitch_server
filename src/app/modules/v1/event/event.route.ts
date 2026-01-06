@@ -31,6 +31,13 @@ eventRouter.patch(
   eventController.updateEvent
 );
 
+eventRouter.patch(
+  "/status/:slug",
+  checkAuth(UserRole.HOST, UserRole.ADMIN),
+  validateRequest(changeStatusSchema),
+  eventController.changeStatus
+);
+
 eventRouter.post(
   "/join/:slug",
   checkAuth(UserRole.USER),
@@ -48,11 +55,4 @@ eventRouter.post(
   checkAuth(UserRole.USER),
   validateRequest(eventReviewSchema),
   eventController.reviewEvent
-);
-
-eventRouter.patch(
-  "/status/:slug",
-  checkAuth(UserRole.HOST),
-  validateRequest(changeStatusSchema),
-  eventController.changeStatus
 );
