@@ -25,7 +25,7 @@ userRouter.get(
 );
 
 userRouter.get(
-  "/profile",
+  "/profile/:userId",
   checkAuth(...Object.values(UserRole)),
   userController.getUserProfile
 );

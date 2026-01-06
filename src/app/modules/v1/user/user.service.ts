@@ -31,15 +31,27 @@ const credentialRegister = async (
     provider: Provider.CREDENTIALS,
   };
 
-  await prisma.$transaction(async (tx) => {
+  const response = await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
       data: newUser,
+      select: {
+        id: true,
+        email: true,
+        provider: true,
+        verification: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     await tx.userProfile.create({
       data: { userId: createdUser.id },
     });
+    return createdUser;
   });
+  return response;
 };
 
 const getAllUsers = async () => {

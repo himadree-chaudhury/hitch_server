@@ -6,12 +6,12 @@ import { userService } from "./user.service";
 
 const credentialRegister = asyncTryCatch(
   async (req: Request, res: Response) => {
-    await userService.credentialRegister(req.body);
+    const result = await userService.credentialRegister(req.body);
     genericResponse(res, {
       success: true,
       status: httpStatus.CREATED,
       message: "User registered successfully",
-      data: null,
+      data: result,
     });
   }
 );
@@ -38,7 +38,7 @@ const getUser = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const getUserProfile = asyncTryCatch(async (req: Request, res: Response) => {
-  const userId = req?.authUser?.id;
+  const userId = req.params.userId;
   const user = await userService.getUserProfile(userId);
   genericResponse(res, {
     success: true,
