@@ -5,13 +5,8 @@ import { paymentController } from "./payment.controller";
 
 export const paymentRouter = Router();
 
-paymentRouter.post(
-  "/success",
-  checkAuth(UserRole.USER),
-  paymentController.verifyPayment
-);
-paymentRouter.post(
-  "/:paymentId/cancel",
-  checkAuth(UserRole.USER),
-  paymentController.cancelPayment
+paymentRouter.get(
+  "/success/:paymentId",
+  checkAuth(UserRole.HOST),
+  paymentController.confirmPaymentSuccess
 );

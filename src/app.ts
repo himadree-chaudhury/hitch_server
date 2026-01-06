@@ -3,15 +3,25 @@ import cors from "cors";
 import express, { Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import morgan from "morgan";
-import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
-import { router } from "./app/routes";
 import passport from "passport";
+import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
+import { paymentController } from "./app/modules/v1/payment/payment.controller";
+import { router } from "./app/routes";
 
 const app = express();
 app.use(morgan("dev"));
+
+
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  paymentController.handleStripeWebhookEvent
+);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+
 
 app.use(
   cors({

@@ -13,7 +13,7 @@ import {
 
 export const eventRouter = Router();
 
-eventRouter.get("/", eventController.getAllEvents);
+eventRouter.get("", eventController.getAllEvents);
 eventRouter.get("/:slug", eventController.getEventDetails);
 
 eventRouter.post(
@@ -52,7 +52,7 @@ eventRouter.post(
 
 eventRouter.patch(
   "/status/:slug",
-  checkAuth(UserRole.HOST, UserRole.ADMIN),
+  checkAuth(UserRole.HOST),
   validateRequest(changeStatusSchema),
   eventController.changeStatus
 );

@@ -45,7 +45,7 @@ const getAllEvents = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const getEventDetails = asyncTryCatch(async (req: Request, res: Response) => {
-  const result = await eventService.getEventDetails(req.params.id);
+  const result = await eventService.getEventDetails(req.params.slug);
   genericResponse(res, {
     success: true,
     status: httpStatus.OK,
@@ -55,23 +55,21 @@ const getEventDetails = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const joinEvent = asyncTryCatch(async (req: Request, res: Response) => {
-  const result = await eventService.joinEvent(
-    (req as any).user.id,
-    req.params.id
-  );
+  const userId = req?.authUser?.id;
+  const slug = req.params.slug;
+  const result = await eventService.joinEvent(userId, slug);
   genericResponse(res, {
     success: true,
     status: httpStatus.OK,
-    message: result.message,
+    message: "Successfully joined the event",
     data: result,
   });
 });
 
 const leaveEvent = asyncTryCatch(async (req: Request, res: Response) => {
-  const result = await eventService.leaveEvent(
-    (req as any).user.id,
-    req.params.id
-  );
+  const userId = req?.authUser?.id;
+  const slug = req.params.slug;
+  const result = await eventService.leaveEvent(userId, slug);
   genericResponse(res, {
     success: true,
     status: httpStatus.OK,
@@ -93,15 +91,18 @@ const reviewEvent = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const changeStatus = asyncTryCatch(async (req: Request, res: Response) => {
+  const slug = req.params.slug;
+  const hostId = req?.authUser?.id;
   const result = await eventService.changeEventStatus(
-    (req as any).user.id,
-    req.params.id,
+    hostId,
+    slug,
     req.body.status
   );
   genericResponse(res, {
     success: true,
     status: httpStatus.OK,
-    message: result.message,
+    message: "Event status updated successfully",
+    data: result,
   });
 });
 

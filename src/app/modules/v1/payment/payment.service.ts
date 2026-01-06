@@ -1,87 +1,182 @@
-import { ParticipantStatus, PaymentStatus } from "@prisma/client";
+import { Event, ParticipantStatus, PaymentStatus } from "@prisma/client";
+import Stripe from "stripe";
 import { stripe } from "../../../configs/stripe";
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 import { sendMail } from "../../../utils/sendMail";
 
-// 1. Create Payment Intent (User intends to pay)
 const createPaymentIntent = async (
   userId: string,
-  event: any,
+  userEmail: string,
+  event: Event,
   amount: number
 ) => {
-  // Convert amount to cents for Stripe
-  const amountInCents = Math.round(amount * 100);
+  const amountInCents = amount * 100;
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amountInCents,
-    currency: event.currency.toLowerCase(),
+  const paymentIntent = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price_data: {
+          currency: event.currency.toLowerCase(),
+          product_data: {
+            name: event.title,
+          },
+          unit_amount: amountInCents,
+        },
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    success_url: "https://web.programming-hero.com/home",
+    cancel_url: "https://phitron.io/",
     metadata: {
-      userId,
+      userId: userId,
+      userEmail: userEmail,
+      hostId: event.hostId,
       eventId: event.id,
-    },
-    automatic_payment_methods: { enabled: true },
-  });
-
-  // Create local Payment Record
-  const payment = await prisma.payment.create({
-    data: {
-      userId,
-      eventId: event.id,
-      amount: amount,
-      currency: event.currency,
-      stripe_payment_intent_id: paymentIntent.id,
-      status: PaymentStatus.REQUIRES_PAYMENT_METHOD,
     },
   });
 
-  // Create PENDING participant
-  await prisma.eventParticipant.create({
-    data: {
-      userId,
-      eventId: event.id,
-      status: ParticipantStatus.PENDING_PAYMENT,
-      paymentId: payment.id,
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.create({
+      data: {
+        userId,
+        eventId: event.id,
+        amount: amount,
+        currency: event.currency,
+        transactionId: paymentIntent.id,
+        status: PaymentStatus.UNPAID,
+      },
+    });
+
+    await tx.eventParticipant.create({
+      data: {
+        userId,
+        eventId: event.id,
+        status: ParticipantStatus.PENDING_PAYMENT,
+        paymentId: payment.id,
+      },
+    });
+
+    return payment;
   });
 
-  return { client_secret: paymentIntent.client_secret, paymentId: payment.id };
+  return { paymentIntentUrl: paymentIntent.url, payment: result };
 };
 
-// 2. Confirm Payment (Called usually by Webhook, but simulating endpoint for prompt)
-const confirmPaymentSuccess = async (paymentIntentId: string) => {
+const handleStripeWebhookEvent = async (event: Stripe.Event) => {
+  await prisma.$transaction(async (tx) => {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as any;
+        console.log(session.id);
+        const updatedPayment = await tx.payment.update({
+          where: { transactionId: session.id },
+          data: {
+            status: PaymentStatus.UNCONFIRMED,
+          },
+        });
+
+        if (updatedPayment) {
+          await tx.eventParticipant.update({
+            where: { paymentId: updatedPayment.id },
+            data: { status: ParticipantStatus.WAITLISTED },
+          });
+        }
+        break;
+      }
+
+      case "payment_intent.canceled": {
+        const session = event.data.object as any;
+        const updatedPayment = await tx.payment.update({
+          where: { transactionId: session.id },
+          data: {
+            status: PaymentStatus.CANCELLED,
+          },
+        });
+
+        if (updatedPayment) {
+          await tx.eventParticipant.update({
+            where: { paymentId: updatedPayment.id },
+            data: { status: ParticipantStatus.CANCELLED },
+          });
+        }
+        break;
+      }
+
+      default: {
+        console.log(`Unhandled event type: ${event.type}`);
+        return;
+      }
+    }
+  });
+};
+
+const confirmPaymentSuccess = async (paymentId: string) => {
   const payment = await prisma.payment.findFirst({
-    where: { stripe_payment_intent_id: paymentIntentId },
+    where: { id: paymentId },
     include: {
-      user: { include: { user: true } },
-      event: { include: { host: { include: { user: true } } } },
+      user: { select: { user: { select: { email: true } } } },
+      event: {
+        select: {
+          title: true,
+          host: { select: { user: { select: { email: true } } } },
+        },
+      },
     },
   });
 
-  if (!payment)
-    throw CustomError.notFound({ message: "Payment record not found" });
+  if (!payment || payment.status !== PaymentStatus.UNCONFIRMED) {
+    const error = CustomError.badRequest({
+      message: "Invalid payment or already confirmed",
+      errors: ["Payment not found or status invalid"],
+      hints: "Check the payment ID and status",
+    });
+    throw error;
+  }
 
-  // Update DB
-  await prisma.$transaction([
-    prisma.payment.update({
+  const eventParticipant = await prisma.eventParticipant.findFirst({
+    where: {
+      paymentId: payment.id,
+      eventId: payment.eventId,
+      userId: payment.userId,
+    },
+  });
+
+  if (
+    !eventParticipant ||
+    eventParticipant.status !== ParticipantStatus.WAITLISTED
+  ) {
+    const error = CustomError.badRequest({
+      message: "Invalid event participant status",
+      errors: ["Event participant not found or status invalid"],
+      hints: "Check the event participant record",
+    });
+    throw error;
+  }
+
+  const response = await prisma.$transaction(async (tx) => {
+    const updatedPayment = await tx.payment.update({
       where: { id: payment.id },
       data: { status: PaymentStatus.SUCCEEDED },
-    }),
-    prisma.eventParticipant.update({
-      where: { paymentId: payment.id }, // Assuming unique relation in schema
-      data: { status: ParticipantStatus.CONFIRMED },
-    }),
-    prisma.event.update({
+    });
+    await tx.eventParticipant.update({
+      where: { paymentId: payment.id },
+      data: { status: ParticipantStatus.PAID },
+    });
+    await tx.event.update({
       where: { id: payment.eventId },
       data: { currentParticipants: { increment: 1 } },
-    }),
-  ]);
+    });
+    return updatedPayment;
+  });
 
   // Emails
 
   const userEmail = {
     to: payment.user.user.email,
-    subject: "Payment Successful & Joined",
+    subject: "Payment Confirmed & Joined",
     text: `You have successfully paid ${payment.amount} and joined the event ${payment.event.title}.`,
     html: `<p>You have successfully paid <strong>${payment.amount}</strong> and joined the event <strong>${payment.event.title}</strong>.</p>`,
   };
@@ -96,52 +191,13 @@ const confirmPaymentSuccess = async (paymentIntentId: string) => {
   };
 
   await sendMail(hostEmail);
+
+  return response;
 };
 
-// 3. Cancel Payment / Refund
-const cancelPayment = async (userId: string, paymentId: string) => {
-  const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
-  if (!payment) throw CustomError.notFound({ message: "Payment not found" });
-  if (payment.userId !== userId)
-    throw CustomError.unauthorized({ message: "Unauthorized" });
-
-  // Refund in Stripe
-  if (
-    payment.status === PaymentStatus.SUCCEEDED &&
-    payment.stripe_payment_intent_id
-  ) {
-    await stripe.refunds.create({
-      payment_intent: payment.stripe_payment_intent_id,
-    });
-  }
-
-  await prisma.payment.update({
-    where: { id: paymentId },
-    data: { status: PaymentStatus.CANCELLED },
-  });
-
-  await prisma.eventParticipant.update({
-    where: { paymentId: paymentId },
-    data: { status: ParticipantStatus.CANCELLED },
-  });
-
-  const userEmail = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true },
-  });
-  if (userEmail)
-    await sendMail({
-      to: userEmail.email,
-      subject: "Payment/Event Cancelled",
-      text: `Your payment of ${payment.amount} has been cancelled and a refund has been initiated.`,
-      html: `<p>Your payment of <strong>${payment.amount}</strong> has been cancelled and a refund has been initiated.</p>`,
-    });
-
-  return { message: "Payment cancelled and refund initiated" };
-};
 
 export const paymentService = {
   createPaymentIntent,
   confirmPaymentSuccess,
-  cancelPayment,
+  handleStripeWebhookEvent,
 };

@@ -53,5 +53,5 @@ export const eventReviewSchema = z.object({
 });
 
 export const changeStatusSchema = z.object({
-  status: z.nativeEnum(EventStatus),
+  status: z.enum(EventStatus),
 });

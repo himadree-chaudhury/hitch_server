@@ -54,7 +54,7 @@ model EventCategoryEvent {
 
 model EventParticipant {
     id        String            @id @default(uuid())
-    eventId   String            @unique
+    eventId   String            
     event     Event             @relation(fields: [eventId], references: [id])
     userId    String            @unique
     user      UserProfile       @relation(fields: [userId], references: [userId])

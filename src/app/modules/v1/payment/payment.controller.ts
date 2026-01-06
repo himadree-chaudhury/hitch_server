@@ -1,34 +1,50 @@
 import { Request, Response } from "express";
 import httpStatus from "http-status-codes";
+import { envSecrets } from "../../../configs/env";
+import { stripe } from "../../../configs/stripe";
 import { asyncTryCatch } from "../../../utils/asyncTryCatch";
 import { genericResponse } from "../../../utils/genericResponse";
 import { paymentService } from "./payment.service";
 
-const verifyPayment = asyncTryCatch(async (req: Request, res: Response) => {
-  // This expects the client to send the paymentIntentId after Stripe confirms on frontend
-  const result = await paymentService.confirmPaymentSuccess(
-    req.body.paymentIntentId
-  );
-  genericResponse(res, {
-    success: true,
-    status: httpStatus.OK,
-    message: "Payment verified successfully",
-  });
-});
+const handleStripeWebhookEvent = asyncTryCatch(
+  async (req: Request, res: Response) => {
+    const sig = req.headers["stripe-signature"] as string;
+    const webhookSecret = envSecrets.STRIPE_WEBHOOK_SECRET;
 
-const cancelPayment = asyncTryCatch(async (req: Request, res: Response) => {
-  const result = await paymentService.cancelPayment(
-    (req as any).user.id,
-    req.params.paymentId
-  );
-  genericResponse(res, {
-    success: true,
-    status: httpStatus.OK,
-    message: result.message,
-  });
-});
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("⚠️ Webhook signature verification failed:", err.message);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+    const result = await paymentService.handleStripeWebhookEvent(event);
+
+    genericResponse(res, {
+      success: true,
+      status: httpStatus.OK,
+      message: "Webhook req send successfully",
+      data: result,
+    });
+  }
+);
+
+const confirmPaymentSuccess = asyncTryCatch(
+  async (req: Request, res: Response) => {
+    const paymentId = req.params.paymentId;
+    const result = await paymentService.confirmPaymentSuccess(paymentId);
+    genericResponse(res, {
+      success: true,
+      status: httpStatus.OK,
+      message: "Payment verified successfully",
+      data: result,
+    });
+  }
+);
+
 
 export const paymentController = {
-  verifyPayment,
-  cancelPayment,
+  confirmPaymentSuccess,
+  handleStripeWebhookEvent,
 };
