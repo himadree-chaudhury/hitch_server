@@ -20,7 +20,7 @@ model Event {
     currency            String
     status              EventStatus          @default(UPCOMING)
     isFeatured          Boolean              @default(false)
-    rating              Int                  @default(0)
+    rating              Float                  @default(0)
     reviewCount         Int                  @default(0)
     totalViews          Int                  @default(0)
     createdAt           DateTime             @default(now())

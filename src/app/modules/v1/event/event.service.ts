@@ -502,6 +502,18 @@ const reviewEvent = async (
     throw error;
   }
 
+  const existingReview = await prisma.eventReview.findFirst({
+    where: { reviewerId: userId, eventId: event.id },
+  });
+  if (existingReview) {
+    const error = CustomError.conflict({
+      message: "Already reviewed",
+      errors: ["You have already reviewed this event."],
+      hints: "Please check your reviews.",
+    });
+    throw error;
+  }
+
   const response = prisma.$transaction(async (tx) => {
     const review = await tx.eventReview.create({
       data: {
@@ -521,7 +533,7 @@ const reviewEvent = async (
     await tx.event.update({
       where: { id: event.id },
       data: {
-        rating: Math.round(aggregations._avg.rating || 0),
+        rating: aggregations._avg.rating || 0,
         reviewCount: aggregations._count.rating,
       },
     });
@@ -531,7 +543,6 @@ const reviewEvent = async (
 
   return response;
 };
-
 
 export const eventService = {
   createEvent,

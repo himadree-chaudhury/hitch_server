@@ -2,6 +2,8 @@ import { Router } from "express";
 import { checkAuth } from "../../../middlewares/checkAuth";
 import { UserRole } from "../../../types/user.type";
 import { hostController } from "./host.controller";
+import { validateRequest } from "../../../middlewares/validateRequest";
+import { reviewHostSchema } from "./host.validation";
 
 export const hostRouter = Router();
 
@@ -13,8 +15,15 @@ hostRouter.get(
   hostController.requestToBeHost
 );
 
-hostRouter.put(
-  "/toggle-role/:email",
+hostRouter.patch(
+  "/toggle-role/:hostId",
   checkAuth(UserRole.ADMIN),
   hostController.toggleHostRole
+);
+
+hostRouter.post(
+  "/review/:slug",
+  checkAuth(UserRole.USER),
+  validateRequest(reviewHostSchema),
+  hostController.reviewHost
 );

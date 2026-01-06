@@ -1,4 +1,10 @@
-import { HostStatus, UserRole } from "@prisma/client";
+import {
+  EventStatus,
+  HostReview,
+  HostStatus,
+  ParticipantStatus,
+  UserRole,
+} from "@prisma/client";
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 
@@ -80,9 +86,9 @@ const requestToBeHost = async (email: string) => {
   return host;
 };
 
-const toggleHostRole = async (email: string) => {
+const toggleHostRole = async (hostId: string) => {
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { id: hostId },
   });
   if (!user) {
     const error = CustomError.notFound({
@@ -94,7 +100,7 @@ const toggleHostRole = async (email: string) => {
   }
 
   const host = await prisma.hostProfile.findUnique({
-    where: { userId: user.id },
+    where: { userId: hostId },
   });
   if (!host) {
     const error = CustomError.notFound({
@@ -105,9 +111,9 @@ const toggleHostRole = async (email: string) => {
     throw error;
   }
 
-  await prisma.$transaction(async (tx) => {
-    const userUpdate = await tx.user.update({
-      where: { email: email },
+  const response = await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: user.id },
       data: {
         role: user.role === UserRole.HOST ? UserRole.USER : UserRole.HOST,
       },
@@ -123,10 +129,99 @@ const toggleHostRole = async (email: string) => {
     });
     return hostUpdate;
   });
+
+  return response;
+};
+
+const reviewHost = async (
+  userId: string,
+  slug: string,
+  payload: HostReview
+) => {
+  const event = await prisma.event.findUnique({
+    where: { slug },
+  });
+
+  if (!event) {
+    const error = CustomError.notFound({
+      message: "Event not found",
+      errors: ["The event you are trying to review does not exist."],
+      hints: "Please check the event slug and try again.",
+    });
+    throw error;
+  }
+
+  const participant = await prisma.eventParticipant.findFirst({
+    where: { userId, eventId: event.id },
+  });
+
+  if (
+    !participant ||
+    participant.status !== ParticipantStatus.PAID ||
+    event.status !== EventStatus.COMPLETED
+  ) {
+    const error = CustomError.badRequest({
+      message: "Cannot review host",
+      errors: [
+        "You can only review the host of an event you have participated in and completed after the event has concluded.",
+      ],
+      hints:
+        "Please ensure you have completed the event before reviewing the host or check your event status.",
+    });
+    throw error;
+  }
+
+  const existingReview = await prisma.hostReview.findFirst({
+    where: {
+      reviewerId: userId,
+      eventId: event.id,
+      hostId: event.hostId,
+    },
+  });
+
+  if (existingReview) {
+    const error = CustomError.conflict({
+      message: "Already reviewed",
+      errors: ["You have already reviewed this event."],
+      hints: "Please check your reviews.",
+    });
+    throw error;
+  }
+
+  const response = await prisma.$transaction(async (tx) => {
+    const review = await tx.hostReview.create({
+      data: {
+        reviewerId: userId,
+        eventId: event.id,
+        hostId: event.hostId,
+        rating: payload.rating,
+        comment: payload.comment,
+      },
+    });
+
+    const aggregations = await tx.hostReview.aggregate({
+      where: { hostId: event.hostId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    await tx.hostProfile.update({
+      where: { userId: event.hostId },
+      data: {
+        rating: aggregations._avg.rating || 0,
+        ratingCount: aggregations._count.rating,
+      },
+    });
+
+    return review;
+  });
+
+  return response;
 };
 
 export const hostService = {
   getHostProfile,
   requestToBeHost,
   toggleHostRole,
+  reviewHost,
 };

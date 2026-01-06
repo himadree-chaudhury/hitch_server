@@ -27,8 +27,8 @@ const requestToBeHost = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const toggleHostRole = asyncTryCatch(async (req: Request, res: Response) => {
-  const email = req.params.email;
-  const result = await hostService.toggleHostRole(email);
+  const hostId = req.params.hostId;
+  const result = await hostService.toggleHostRole(hostId);
   genericResponse(res, {
     success: true,
     status: httpStatus.OK,
@@ -37,8 +37,23 @@ const toggleHostRole = asyncTryCatch(async (req: Request, res: Response) => {
   });
 });
 
+const reviewHost = asyncTryCatch(async (req: Request, res: Response) => {
+  const userId = req.authUser!.id;
+  const  slug  = req.params.slug; 
+
+  const result = await hostService.reviewHost(userId, slug, req.body);
+
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.CREATED,
+    message: "Host reviewed successfully",
+    data: result,
+  });
+});
+
 export const hostController = {
   getHostProfile,
   requestToBeHost,
   toggleHostRole,
+  reviewHost,
 };
