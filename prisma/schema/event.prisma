@@ -1,6 +1,6 @@
 model Event {
     id                  String               @id @default(uuid())
-    hostId              String               
+    hostId              String
     host                HostProfile          @relation(fields: [hostId], references: [userId])
     title               String
     slug                String               @unique
@@ -20,7 +20,7 @@ model Event {
     currency            String
     status              EventStatus          @default(UPCOMING)
     isFeatured          Boolean              @default(false)
-    rating              Float                  @default(0)
+    rating              Float                @default(0)
     reviewCount         Int                  @default(0)
     totalViews          Int                  @default(0)
     createdAt           DateTime             @default(now())
@@ -42,9 +42,9 @@ model EventCategory {
 }
 
 model EventCategoryEvent {
-    eventId         String        
+    eventId         String
     event           Event         @relation(fields: [eventId], references: [id])
-    eventCategoryId String        
+    eventCategoryId String
     eventCategory   EventCategory @relation(fields: [eventCategoryId], references: [id])
     createdAt       DateTime      @default(now())
     updatedAt       DateTime      @updatedAt
@@ -54,9 +54,9 @@ model EventCategoryEvent {
 
 model EventParticipant {
     id        String            @id @default(uuid())
-    eventId   String            
+    eventId   String
     event     Event             @relation(fields: [eventId], references: [id])
-    userId    String            @unique
+    userId    String
     user      UserProfile       @relation(fields: [userId], references: [userId])
     status    ParticipantStatus @default(PENDING_PAYMENT)
     paymentId String?           @unique

@@ -9,7 +9,7 @@ const createPaymentIntent = async (
   userId: string,
   userEmail: string,
   event: Event,
-  amount: number
+  amount: number,
 ) => {
   const amountInCents = amount * 100;
 
@@ -197,7 +197,34 @@ const confirmPaymentSuccess = async (paymentId: string) => {
 
 const getPayments = async (hostId: string) => {
   const payments = await prisma.payment.findMany({
-    where: { hostId }
+    where: { hostId },
+    include: {
+      user: {
+        select: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      },
+      event: {
+        select: {
+          title: true,
+          slug: true,
+          id: true,
+        },
+      },
+      host: {
+        select: {
+          user: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   return payments;

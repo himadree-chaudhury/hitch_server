@@ -164,7 +164,6 @@ const updateEvent = async (
 const getAllEvents = async (query: any) => {
   const { search, type, city } = query;
   const whereConditions: Prisma.EventWhereInput = {
-    status: EventStatus.UPCOMING || EventStatus.ONGOING,
     ...(search && {
       OR: [
         { title: { contains: search, mode: "insensitive" } },
@@ -446,7 +445,7 @@ const leaveEvent = async (userId: string, slug: string) => {
 
   const response = await prisma.$transaction(async (tx) => {
     const participantUpdate = await tx.eventParticipant.update({
-      where: { eventId: event.id, userId },
+      where: { id: participant.id },
       data: { status: ParticipantStatus.CANCELLED },
       include: { payment: true },
     });
@@ -490,8 +489,13 @@ const reviewEvent = async (
     throw error;
   }
 
-  const participant = await prisma.eventParticipant.findUnique({
+  const participant = await prisma.eventParticipant.findFirst({
     where: { userId, eventId: event.id },
+    include: {
+      event: true,
+      user: { select: { user: { select: { email: true } } } },
+      payment: true,
+    },
   });
 
   if (
