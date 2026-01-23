@@ -63,10 +63,24 @@ const updateUserProfile = asyncTryCatch(
   }
 );
 
+const toggleUserStatus = asyncTryCatch(
+  async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const result = await userService.toggleUserStatus(userId);
+    genericResponse(res, {
+      success: true,
+      status: httpStatus.OK,
+      message: "User status toggled successfully",
+      data: result,
+    });
+  }
+);
+
 export const userController = {
   credentialRegister,
   getAllUsers,
   getUser,
   getUserProfile,
   updateUserProfile,
+  toggleUserStatus,
 };

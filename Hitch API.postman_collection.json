@@ -127,7 +127,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"password\": \"{{$randomPassword}}\"\r\n    \r\n    \r\n    // \"email\": \"bdchaudhury2000@gmail.com\",\r\n    // \"password\": \"123456Aa\"\r\n}",
+							"raw": "{\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"password\": \"{{$randomPassword}}\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -222,7 +222,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"password\": \"{{$randomPassword}}\"\r\n    \r\n    \r\n    // \"email\": \"bdchaudhury2000@gmail.com\",\r\n    // \"password\": \"123456Aa\"\r\n}",
+									"raw": "{\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"password\": \"{{$randomPassword}}\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -931,7 +931,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"email\": \"{{hostEmail}}\",\r\n    \"password\": \"{{hostPassword}}\"\r\n}",
+											"raw": "{\r\n    \"email\": \"{{adminEmail}}\",\r\n    \"password\": \"{{adminPassword}}\"\r\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -1163,7 +1163,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    // \"email\": \"{{UserEmail}}\",\r\n    // \"password\": \"{{UserPassword}}\"\r\n\r\n    // \"email\": \"user@email.com\",\r\n    // \"password\": \"123456Aa\"\r\n\r\n    \"email\": \"bdchaudhury2000@gmail.com\",\r\n    \"password\": \"123456Aa\"\r\n}",
+							"raw": "{\r\n    // \"email\": \"{{UserEmail}}\",\r\n    // \"password\": \"{{UserPassword}}\"\r\n\r\n    \r\n    \"email\": \"bdchaudhury2000@gmail.com\",\r\n    \"password\": \"123456Aa\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1189,7 +1189,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"email\": \"{{UserEmail}}\",\r\n    \"password\": \"{{UserPassword}}\"\r\n}",
+									"raw": "{\r\n    \"email\": \"{{userEmail}}\",\r\n    \"password\": \"{{userPassword}}\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"

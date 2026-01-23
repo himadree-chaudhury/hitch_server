@@ -43,6 +43,7 @@ const createPaymentIntent = async (
       data: {
         userId,
         eventId: event.id,
+        hostId: event.hostId,
         amount: amount,
         currency: event.currency,
         transactionId: paymentIntent.id,
@@ -194,8 +195,17 @@ const confirmPaymentSuccess = async (paymentId: string) => {
   return response;
 };
 
+const getPayments = async (hostId: string) => {
+  const payments = await prisma.payment.findMany({
+    where: { hostId }
+  });
+
+  return payments;
+};
+
 export const paymentService = {
   createPaymentIntent,
   confirmPaymentSuccess,
   handleStripeWebhookEvent,
+  getPayments,
 };

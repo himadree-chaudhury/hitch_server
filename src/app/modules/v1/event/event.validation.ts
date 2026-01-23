@@ -7,18 +7,19 @@ export const createEventSchema = z.object({
     .min(5, "Title must be at least 5 characters")
     .max(100, "Title must be at most 100 characters"),
   type: z.enum(EventType),
-  eventCategories: z
-    .array(z.string())
-    .min(1, "At least one category is required"),
+  eventCategories: z.preprocess(
+    (val) => (Array.isArray(val) ? val : [val]),
+    z.array(z.string()).min(1),
+  ),
   description: z.string().optional(),
   startTime: z.coerce.date("Start time must be a valid date"),
   endTime: z.coerce.date("End time must be a valid date"),
   city: z.string("City is required"),
   country: z.string("Country is required"),
   address: z.string("Address is required"),
-  minParticipants: z.number().min(1),
-  maxParticipants: z.number().optional(),
-  joiningFee: z.number().min(0, "Joining fee must be at least 0"),
+  minParticipants: z.coerce.number().min(1),
+  maxParticipants: z.coerce.number().optional(),
+  joiningFee: z.coerce.number().min(0, "Joining fee must be at least 0"),
   currency: z.string().default("USD"),
   imageUrl: z.url("This must be a valid URL").optional(),
 });
@@ -31,8 +32,10 @@ export const updateEventSchema = z.object({
     .optional(),
   type: z.enum(EventType).optional(),
   eventCategories: z
-    .array(z.string())
-    .min(1, "At least one category is required")
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : [val]),
+      z.array(z.string()).min(1),
+    )
     .optional(),
   description: z.string().optional(),
   startTime: z.coerce.date("Start time must be a valid date").optional(),
@@ -40,13 +43,15 @@ export const updateEventSchema = z.object({
   city: z.string("City is required").optional(),
   country: z.string("Country is required").optional(),
   address: z.string("Address is required").optional(),
-  minParticipants: z.number().min(1).optional(),
-  maxParticipants: z.number().optional(),
-  joiningFee: z.number().min(0, "Joining fee must be at least 0").optional(),
+  minParticipants: z.coerce.number().min(1).optional(),
+  maxParticipants: z.coerce.number().optional(),
+  joiningFee: z.coerce
+    .number()
+    .min(0, "Joining fee must be at least 0")
+    .optional(),
   currency: z.string().default("USD").optional(),
   imageUrl: z.url("This must be a valid URL").optional(),
 });
-
 
 export const changeStatusSchema = z.object({
   status: z.enum(EventStatus),

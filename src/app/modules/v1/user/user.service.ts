@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 
-import { Provider, User, UserProfile } from "@prisma/client";
+import { Provider, User, UserProfile, UserStatus } from "@prisma/client";
 import { envSecrets } from "../../../configs/env";
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
@@ -140,10 +140,45 @@ const updateUserProfile = async (userId: string, payload: UserProfile) => {
   return newUserProfile;
 };
 
+const toggleUserStatus = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    const error = CustomError.notFound({
+      message: "User not found",
+      errors: ["The requested user does not exist."],
+      hints: "Please check the user ID and try again.",
+    });
+    throw error;
+  }
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      status:
+        user.status === UserStatus.ACTIVE
+          ? UserStatus.BLOCKED
+          : UserStatus.ACTIVE,
+    },
+    select: {
+      id: true,
+      email: true,
+      provider: true,
+      verification: true,
+      role: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+  return updatedUser;
+};
+
 export const userService = {
   credentialRegister,
   getUser,
   getAllUsers,
   getUserProfile,
   updateUserProfile,
+  toggleUserStatus,
 };

@@ -4,6 +4,15 @@ import { asyncTryCatch } from "../../../utils/asyncTryCatch";
 import { genericResponse } from "../../../utils/genericResponse";
 import { hostService } from "./host.service";
 
+const getAllHosts = asyncTryCatch(async (req: Request, res: Response) => {
+  const hosts = await hostService.getAllHosts();
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Host profile retrieved successfully",
+    data: hosts,
+  });
+});
 const getHostProfile = asyncTryCatch(async (req: Request, res: Response) => {
   const userId = req.params.hostId;
   const hostProfile = await hostService.getHostProfile(userId);
@@ -52,6 +61,7 @@ const reviewHost = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 export const hostController = {
+  getAllHosts,
   getHostProfile,
   requestToBeHost,
   toggleHostRole,

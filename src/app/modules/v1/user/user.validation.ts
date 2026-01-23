@@ -43,6 +43,4 @@ export const userProfileValidationSchema = z.object({
     .string()
     .max(50, "Country must be at most 50 characters long")
     .optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
 });

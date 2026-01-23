@@ -21,38 +21,45 @@ eventRouter.post(
   checkAuth(UserRole.HOST, UserRole.ADMIN),
   multerConfig.single("image"),
   validateRequest(createEventSchema),
-  eventController.createEvent
+  eventController.createEvent,
 );
+
+eventRouter.get(
+  "/host/events",
+  checkAuth(UserRole.HOST, UserRole.ADMIN),
+  eventController.getHostEvents,
+);
+
 eventRouter.patch(
   "/update/:slug",
   checkAuth(UserRole.HOST, UserRole.ADMIN),
   multerConfig.single("image"),
   validateRequest(updateEventSchema),
-  eventController.updateEvent
+  eventController.updateEvent,
 );
 
 eventRouter.patch(
   "/status/:slug",
   checkAuth(UserRole.HOST, UserRole.ADMIN),
   validateRequest(changeStatusSchema),
-  eventController.changeStatus
+  eventController.changeStatus,
 );
 
 eventRouter.post(
   "/join/:slug",
   checkAuth(UserRole.USER),
-  eventController.joinEvent
+  eventController.joinEvent,
 );
 
 eventRouter.post(
   "/leave/:slug",
   checkAuth(UserRole.USER),
-  eventController.leaveEvent
+  eventController.leaveEvent,
 );
 
 eventRouter.post(
   "/review/:slug",
   checkAuth(UserRole.USER),
   validateRequest(eventReviewSchema),
-  eventController.reviewEvent
+  eventController.reviewEvent,
 );

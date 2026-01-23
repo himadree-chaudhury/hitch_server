@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { multerConfig } from "../../../configs/multer";
 import { checkAuth } from "../../../middlewares/checkAuth";
 import { validateRequest } from "../../../middlewares/validateRequest";
 import { UserRole } from "../../../types/user.type";
@@ -7,7 +8,6 @@ import {
   userProfileValidationSchema,
   userValidationSchema,
 } from "./user.validation";
-import { multerConfig } from "../../../configs/multer";
 
 export const userRouter = Router();
 
@@ -36,4 +36,10 @@ userRouter.patch(
   multerConfig.single("profileImage"),
   validateRequest(userProfileValidationSchema),
   userController.updateUserProfile
+);
+
+userRouter.patch(
+  "/toggle-status/:userId",
+  checkAuth(UserRole.ADMIN),
+  userController.toggleUserStatus
 );

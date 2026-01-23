@@ -8,6 +8,29 @@ import {
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 
+const getAllHosts = async () => {
+  const hosts = await prisma.hostProfile.findMany({
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!hosts || hosts.length === 0) {
+    const error = CustomError.notFound({
+      message: "No hosts found",
+      errors: ["There are currently no hosts available."],
+      hints: "Please check back later.",
+    });
+    throw error;
+  }
+
+  return hosts;
+};
+
 const getHostProfile = async (userId: string) => {
   const hostProfile = await prisma.hostProfile.findUnique({
     where: { userId },
@@ -94,7 +117,7 @@ const toggleHostRole = async (hostId: string) => {
     const error = CustomError.notFound({
       message: "User not found",
       errors: ["The requested user does not exist."],
-      hints: "Please check the email and try again.",
+      hints: "Please check the user ID and try again.",
     });
     throw error;
   }
@@ -122,9 +145,11 @@ const toggleHostRole = async (hostId: string) => {
       where: { userId: user.id },
       data: {
         hostStatus:
-          host?.hostStatus === HostStatus.APPROVED
-            ? HostStatus.REJECTED
-            : HostStatus.APPROVED,
+          host.hostStatus === HostStatus.PENDING
+            ? HostStatus.APPROVED // PENDING → APPROVED
+            : host.hostStatus === HostStatus.APPROVED
+              ? HostStatus.REJECTED // APPROVED → REJECTED
+              : HostStatus.APPROVED, // REJECTED (or other) → APPROVED
       },
     });
     return hostUpdate;
@@ -136,7 +161,7 @@ const toggleHostRole = async (hostId: string) => {
 const reviewHost = async (
   userId: string,
   slug: string,
-  payload: HostReview
+  payload: HostReview,
 ) => {
   const event = await prisma.event.findUnique({
     where: { slug },
@@ -220,6 +245,7 @@ const reviewHost = async (
 };
 
 export const hostService = {
+  getAllHosts,
   getHostProfile,
   requestToBeHost,
   toggleHostRole,

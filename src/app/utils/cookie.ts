@@ -1,9 +1,13 @@
 import { CookieOptions, Response } from "express";
+import { envSecrets } from "../configs/env";
 
-const cookieOptions = {
+const isProd = envSecrets.NODE_ENV === "production";
+
+const cookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: false,
-  sameSite: "none",
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  path: "/"
 };
 
 export const setCookie = (
@@ -11,20 +15,10 @@ export const setCookie = (
   tokenInfo: { accessToken: string; refreshToken: string }
 ) => {
   if (tokenInfo.accessToken) {
-    res.cookie("accessToken", tokenInfo.accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path:"/",
-    });
+    res.cookie("accessToken", tokenInfo.accessToken, cookieOptions);
   }
   if (tokenInfo.refreshToken) {
-    res.cookie("refreshToken", tokenInfo.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path:"/",
-    });
+    res.cookie("refreshToken", tokenInfo.refreshToken, cookieOptions);
   }
 };
 

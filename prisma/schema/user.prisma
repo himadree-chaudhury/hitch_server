@@ -47,4 +47,5 @@ model HostProfile {
   
   hostedEvents  Event[]
   reviews       HostReview[]
+  payments      Payment[]
 }

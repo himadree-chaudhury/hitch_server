@@ -1,8 +1,10 @@
 model Payment {
     id                String             @id @default(uuid())
-    userId            String             
+    userId            String
     user              UserProfile        @relation(fields: [userId], references: [userId])
-    eventId           String             
+    hostId            String
+    host              HostProfile        @relation(fields: [hostId], references: [userId])
+    eventId           String
     event             Event              @relation(fields: [eventId], references: [id])
     amount            Float
     currency          String

@@ -44,6 +44,17 @@ const getAllEvents = asyncTryCatch(async (req: Request, res: Response) => {
   });
 });
 
+const getHostEvents = asyncTryCatch(async (req: Request, res: Response) => {
+  const hostId = req?.authUser?.id;
+  const result = await eventService.getHostEvents(hostId);
+  genericResponse(res, {
+    success: true,
+    status: httpStatus.OK,
+    message: "Host events fetched",
+    data: result,
+  });
+});
+
 const getEventDetails = asyncTryCatch(async (req: Request, res: Response) => {
   const result = await eventService.getEventDetails(req.params.slug);
   genericResponse(res, {
@@ -111,6 +122,7 @@ export const eventController = {
   updateEvent,
   getAllEvents,
   getEventDetails,
+  getHostEvents,
   changeStatus,
   joinEvent,
   leaveEvent,

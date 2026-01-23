@@ -1,11 +1,13 @@
 import { Router } from "express";
 import { checkAuth } from "../../../middlewares/checkAuth";
+import { validateRequest } from "../../../middlewares/validateRequest";
 import { UserRole } from "../../../types/user.type";
 import { hostController } from "./host.controller";
-import { validateRequest } from "../../../middlewares/validateRequest";
 import { reviewHostSchema } from "./host.validation";
 
 export const hostRouter = Router();
+
+hostRouter.get("", checkAuth(UserRole.ADMIN), hostController.getAllHosts);
 
 hostRouter.get("/profile/:hostId", hostController.getHostProfile);
 

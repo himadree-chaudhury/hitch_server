@@ -14,7 +14,7 @@ import { paymentService } from "../payment/payment.service";
 
 const createEvent = async (
   hostId: string,
-  payload: Event & { eventCategories: string[] }
+  payload: Event & { eventCategories: string[] },
 ) => {
   const host = await prisma.hostProfile.findUnique({
     where: { userId: hostId },
@@ -58,7 +58,7 @@ const createEvent = async (
           await tx.eventCategoryEvent.create({
             data: { eventId: event.id, eventCategoryId: createdCategory.id },
           });
-        })
+        }),
       );
     }
 
@@ -82,7 +82,7 @@ const createEvent = async (
 const updateEvent = async (
   hostId: string,
   slug: string,
-  payload: Partial<Event> & { eventCategories?: string[] }
+  payload: Partial<Event> & { eventCategories?: string[] },
 ) => {
   const event = await prisma.event.findUnique({
     where: { slug },
@@ -142,7 +142,7 @@ const updateEvent = async (
           await tx.eventCategoryEvent.create({
             data: { eventId: event.id, eventCategoryId: createdCategory.id },
           });
-        })
+        }),
       );
     }
   });
@@ -191,6 +191,13 @@ const getAllEvents = async (query: any) => {
   });
 };
 
+const getHostEvents = async (hostId: string) => {
+  const events = await prisma.event.findMany({
+    where: { hostId },
+  });
+  return events;
+};
+
 const getEventDetails = async (slug: string) => {
   const event = await prisma.event.findUnique({
     where: { slug },
@@ -234,7 +241,7 @@ const getEventDetails = async (slug: string) => {
 const changeEventStatus = async (
   hostId: string,
   slug: string,
-  status: EventStatus
+  status: EventStatus,
 ) => {
   const event = await prisma.event.findUnique({
     where: { slug },
@@ -387,7 +394,7 @@ const joinEvent = async (userId: string, slug: string) => {
       user.id,
       user.email,
       event,
-      event.joiningFee
+      event.joiningFee,
     );
 
     return paymentIntent;
@@ -469,7 +476,7 @@ const leaveEvent = async (userId: string, slug: string) => {
 const reviewEvent = async (
   userId: string,
   slug: string,
-  payload: EventReview
+  payload: EventReview,
 ) => {
   const event = await prisma.event.findUnique({
     where: { slug },
@@ -548,6 +555,7 @@ export const eventService = {
   createEvent,
   updateEvent,
   getAllEvents,
+  getHostEvents,
   getEventDetails,
   joinEvent,
   leaveEvent,

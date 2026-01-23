@@ -43,8 +43,22 @@ const confirmPaymentSuccess = asyncTryCatch(
   }
 );
 
+const getPayments = asyncTryCatch(
+  async (req: Request, res: Response) => {
+    const hostId = req?.authUser?.id;
+    const result = await paymentService.getPayments(hostId);
+    genericResponse(res, {
+      success: true,
+      status: httpStatus.OK,
+      message: "Payments retrieved successfully",
+      data: result,
+    });
+  }
+);
+
 
 export const paymentController = {
   confirmPaymentSuccess,
   handleStripeWebhookEvent,
+  getPayments,
 };
