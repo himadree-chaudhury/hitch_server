@@ -29,9 +29,6 @@
   - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
 - [🔑 Environment Variables](#-environment-variables)
-- [🔌 API Documentation](#-api-documentation)
-- [📸 Screenshots](#-screenshots)
-- [🤝 Contributing](#-contributing)
 
 ---
 
