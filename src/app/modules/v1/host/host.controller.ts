@@ -25,7 +25,7 @@ const getHostProfile = asyncTryCatch(async (req: Request, res: Response) => {
 });
 
 const requestToBeHost = asyncTryCatch(async (req: Request, res: Response) => {
-  const userEmail = req.authUser.email;
+  const userEmail = req?.authUser?.email;
   const response = await hostService.requestToBeHost(userEmail);
   genericResponse(res, {
     success: true,

@@ -6,7 +6,7 @@ model HostReview {
     reviewer   UserProfile @relation(fields: [reviewerId], references: [userId])
     hostId     String
     host       HostProfile @relation(fields: [hostId], references: [userId])
-    rating     Int
+    rating     Float
     comment    String
     createdAt  DateTime    @default(now())
     updatedAt  DateTime    @updatedAt
@@ -18,7 +18,7 @@ model EventReview {
     event      Event       @relation(fields: [eventId], references: [id])
     reviewerId String
     reviewer   UserProfile @relation(fields: [reviewerId], references: [userId])
-    rating     Int
+    rating     Float        
     comment    String
     createdAt  DateTime    @default(now())
     updatedAt  DateTime    @updatedAt

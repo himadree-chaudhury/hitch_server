@@ -42,10 +42,20 @@ const getHostProfile = async (userId: string) => {
               firstName: true,
               lastName: true,
               bio: true,
-              hostReviews: true,
-              eventReviews: true,
-              eventsJoined: true,
+              imageUrl: true,
               createdAt: true,
+            },
+          },
+        },
+      },
+      hostedEvents: true,
+      reviews: {
+        include: {
+          reviewer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              imageUrl: true,
             },
           },
         },

@@ -4,6 +4,7 @@ import { stripe } from "../../../configs/stripe";
 import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 import { sendMail } from "../../../utils/sendMail";
+import { envSecrets } from "../../../configs/env";
 
 const createPaymentIntent = async (
   userId: string,
@@ -28,8 +29,8 @@ const createPaymentIntent = async (
       },
     ],
     mode: "payment",
-    success_url: "https://web.programming-hero.com/home",
-    cancel_url: "https://phitron.io/",
+    success_url: `${envSecrets.FRONTEND_URL}/my-profile`,
+    cancel_url: `${envSecrets.FRONTEND_URL}/event/${event.slug}`,
     metadata: {
       userId: userId,
       userEmail: userEmail,

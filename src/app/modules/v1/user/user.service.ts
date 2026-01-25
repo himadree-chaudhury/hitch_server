@@ -6,7 +6,7 @@ import { prisma } from "../../../db/prisma";
 import { CustomError } from "../../../utils/error";
 
 const credentialRegister = async (
-  payload: Pick<User, "email" | "password">
+  payload: Pick<User, "email" | "password">,
 ) => {
   const isUserExist = await prisma.user.findUnique({
     where: { email: payload.email },
@@ -22,7 +22,7 @@ const credentialRegister = async (
   }
   const hashedPassword = await bcrypt.hash(
     payload.password as string,
-    envSecrets.SALT_ROUNDS
+    envSecrets.SALT_ROUNDS,
   );
 
   const newUser: Pick<User, "email" | "password" | "provider"> = {
@@ -101,10 +101,61 @@ const getUserProfile = async (userId: string) => {
   const user = await prisma.userProfile.findUnique({
     where: { userId },
     include: {
-      eventsJoined: true,
-      payments: true,
-      hostReviews: true,
-      eventReviews: true,
+      eventsJoined: {
+        include: {
+          event: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              status: true,
+            },
+          },
+        },
+      },
+      payments: {
+        include: {
+          event: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      },
+      hostReviews: {
+        include: {
+          host: {
+            select: {
+              user: {
+                select: {
+                  userProfile: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          event: {
+            select: {
+              title: true,
+              slug: true,
+            },
+          },
+        },
+      },
+      eventReviews: {
+        include: {
+          event: {
+            select: {
+              title: true,
+              slug: true,
+            },
+          },
+        },
+      },
     },
   });
 

@@ -215,15 +215,65 @@ const getEventDetails = async (slug: string) => {
     where: { slug },
     data: { totalViews: { increment: 1 } },
     include: {
-      host: { select: { user: { select: { userProfile: true } } } },
+      host: {
+        select: {
+          user: {
+            select: {
+              userProfile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  imageUrl: true,
+                },
+              },
+            },
+          },
+          userId: true,
+          createdAt: true,
+        },
+      },
       eventParticipants: {
         select: {
           user: {
-            select: { user: { select: { userProfile: true } } },
+            select: {
+              user: {
+                select: {
+                  userProfile: {
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true,
+                      imageUrl: true,
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
-      eventReviews: { select: { reviewer: true } },
+      eventReviews: {
+        select: {
+          reviewer: {
+            select: {
+              user: {
+                select: {
+                  userProfile: {
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true,
+                      imageUrl: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          rating: true,
+          comment: true,
+        },
+      },
       eventCategories: {
         select: {
           eventCategory: {
